@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+openai
+python-dotenv
+pydantic
+python-multipart # for future-proofing, though not strictly needed for this mock
+tqdm # for progress bars in the future, if needed
+httpx # for making requests in the client
