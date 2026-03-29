@@ -38,6 +38,62 @@ class Orchestrator:
     # Public API
     # ------------------------------------------------------------------
 
+    async def handle_query_stream(self, user_message: str):
+        """
+        Async generator that yields real-time events while processing.
+
+        Yields dicts:
+          {"type": "tool_start", "tool": name, "args": {...}}
+          {"type": "tool_end",   "tool": name, "preview": "..."}
+          {"type": "done",       "content": "final answer text"}
+          {"type": "error",      "content": "error message"}
+        """
+        tools = await self._ensure_tools()
+        self._messages.append({"role": "user", "content": user_message})
+
+        try:
+            for _round in range(self._config.max_tool_rounds):
+                response = await self._model.chat(self._messages, tools)
+
+                if response.has_tool_calls:
+                    self._messages.append(
+                        {
+                            "role": "assistant",
+                            "content": response.text or "",
+                            "tool_calls": [
+                                {"id": tc.id, "name": tc.name, "arguments": tc.arguments}
+                                for tc in response.tool_calls
+                            ],
+                        }
+                    )
+                    for tc in response.tool_calls:
+                        yield {"type": "tool_start", "tool": tc.name, "args": tc.arguments}
+                        result = await self._mcp.call_tool(tc.name, tc.arguments)
+                        result_str = (
+                            json.dumps(result, ensure_ascii=False)
+                            if not isinstance(result, str)
+                            else result
+                        )
+                        yield {"type": "tool_end", "tool": tc.name, "preview": result_str[:120]}
+                        self._messages.append(
+                            {
+                                "role": "tool",
+                                "tool_call_id": tc.id,
+                                "name": tc.name,
+                                "content": result_str,
+                            }
+                        )
+                else:
+                    text = response.text.strip()
+                    self._messages.append({"role": "assistant", "content": text})
+                    yield {"type": "done", "content": text}
+                    return
+
+            yield {"type": "done", "content": "[Error: reached maximum tool-calling rounds]"}
+
+        except Exception as exc:
+            yield {"type": "error", "content": str(exc)}
+
     async def handle_query(self, user_message: str) -> str:
         """
         Process one user turn through the full agentic loop.

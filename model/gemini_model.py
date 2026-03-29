@@ -6,6 +6,7 @@ Get API key: https://aistudio.google.com → "Get API key"
 """
 from __future__ import annotations
 
+import asyncio
 import uuid
 from typing import Any
 
@@ -81,7 +82,7 @@ class GeminiModel(BaseModel):
                 contents.append(
                     types.Content(
                         role="user",
-                        parts=[types.Part.from_text(content_str or " ")],
+                        parts=[types.Part(text=content_str or " ")],
                     )
                 )
 
@@ -98,7 +99,7 @@ class GeminiModel(BaseModel):
                         )
                     )
                 if content_str:
-                    parts.append(types.Part.from_text(content_str))
+                    parts.append(types.Part(text=content_str))
                 if parts:
                     contents.append(types.Content(role="model", parts=parts))
 
@@ -124,14 +125,29 @@ class GeminiModel(BaseModel):
     async def chat(self, messages: list[dict], tools: list[dict]) -> ModelResponse:
         system_instruction, contents = self._build_contents(messages)
 
-        response = await self._client.aio.models.generate_content(
-            model=self._model_name,
-            contents=contents,
-            config=types.GenerateContentConfig(
-                system_instruction=system_instruction or None,
-                tools=self._convert_tools(tools),
-            ),
-        )
+        # Retry with exponential backoff on 429 (free-tier rate limit: 15 RPM)
+        last_exc: Exception | None = None
+        for attempt in range(5):
+            try:
+                response = await self._client.aio.models.generate_content(
+                    model=self._model_name,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        system_instruction=system_instruction or None,
+                        tools=self._convert_tools(tools),
+                    ),
+                )
+                break  # success
+            except Exception as exc:
+                last_exc = exc
+                if "429" in str(exc) and attempt < 4:
+                    wait = 2 ** attempt  # 1s, 2s, 4s, 8s
+                    print(f"  [gemini] rate-limited, retrying in {wait}s…")
+                    await asyncio.sleep(wait)
+                else:
+                    raise
+        else:
+            raise last_exc
 
         candidate = response.candidates[0]
         tool_calls: list[ToolCall] = []
