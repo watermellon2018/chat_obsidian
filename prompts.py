@@ -76,6 +76,22 @@ You must never:
 * Use confident or authoritative language when Obsidian is empty
 """
 
+FLASHCARD_PROMPT = """You are a flashcard generator for technical interview preparation.
+
+You will be given the content of one note from an Obsidian knowledge base.
+Your task: generate exactly ONE flashcard as a JSON object with two fields:
+  - "question": a clear, specific interview-style question based on the note content
+  - "answer": a concise but complete answer (2-5 sentences)
+
+Rules:
+- Output ONLY valid JSON, no markdown fences, no extra text
+- The question must be answerable from the note content alone
+- Prefer "how", "why", "what is the difference between" style questions
+- Do NOT ask trivial yes/no questions
+
+Example output:
+{"question": "What is BM25 and how does it differ from TF-IDF?", "answer": "BM25 is a probabilistic ranking function that scores documents by term frequency and inverse document frequency, with saturation applied to term frequency. Unlike basic TF-IDF, BM25 includes document length normalization and a tunable saturation parameter k1, making it more robust for real-world retrieval."}"""
+
 TOOL_POLICY = """
 You have access to an MCP server connected to the user's Obsidian vault.
 

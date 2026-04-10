@@ -178,3 +178,61 @@ def _print_tool_call(name: str, args: dict) -> None:
 def _print_tool_result(result_str: str) -> None:
     preview = result_str[:150] + ("…" if len(result_str) > 150 else "")
     print(f"  \033[90m[result] {preview}\033[0m")
+
+
+# ------------------------------------------------------------------
+# Flashcard generation (standalone — does not touch chat history)
+# ------------------------------------------------------------------
+
+async def generate_flashcard(
+    model: "BaseModel",
+    mcp_client: "MCPClient",
+    config: "Config",
+    exclude: list[str] | None = None,
+) -> dict:
+    """
+    Pick a random vault note and generate a Q&A flashcard via the model.
+
+    Returns: {"question": "...", "answer": "...", "source": "path"}
+    """
+    import random
+
+    from prompts import FLASHCARD_PROMPT
+
+    # 1. List all notes via MCP
+    notes_raw = await mcp_client.call_tool("list_notes", {})
+    notes: list[dict] = (
+        json.loads(notes_raw) if isinstance(notes_raw, str) else notes_raw
+    )
+
+    # 2. Exclude already-seen paths; reset if all seen
+    candidates = [n for n in notes if n["path"] not in (exclude or [])]
+    if not candidates:
+        candidates = notes
+
+    # 3. Pick a random note and read its content
+    note = random.choice(candidates)
+    content_raw = await mcp_client.call_tool("read_note", {"path": note["path"]})
+    content_obj: dict = (
+        json.loads(content_raw) if isinstance(content_raw, str) else content_raw
+    )
+    note_text = content_obj.get("content", "")
+
+    # 4. Ask model to produce flashcard JSON (no MCP tools, just text generation)
+    messages = [
+        {"role": "system", "content": FLASHCARD_PROMPT},
+        {"role": "user", "content": f"Note title: {note['title']}\n\n{note_text}"},
+    ]
+    response = await model.chat(messages, tools=[])
+    raw_text = response.text.strip()
+
+    # 5. Parse JSON — strip markdown fences if the model adds them
+    if raw_text.startswith("```"):
+        raw_text = raw_text.split("```")[1]
+        if raw_text.startswith("json"):
+            raw_text = raw_text[4:]
+        raw_text = raw_text.strip()
+
+    card: dict = json.loads(raw_text)
+    card["source"] = note["path"]
+    return card

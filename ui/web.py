@@ -2,8 +2,9 @@
 FastAPI web interface for Obsidian MCP Chat.
 
 Routes:
-  GET /    → chat HTML page (served inline)
-  WS  /ws  → WebSocket per browser session
+  GET /           → HTML страница (чат + карточки)
+  GET /flashcard  → генерация Q&A карточки из случайной заметки
+  WS  /ws         → WebSocket на сессию браузера (чат)
 
 WebSocket message protocol:
   Client → Server:  {"message": "user text"}
@@ -59,6 +60,16 @@ async def index():
     return HTMLResponse(_HTML)
 
 
+@app.get("/flashcard")
+async def get_flashcard(exclude: str = ""):
+    """Вернуть Q&A карточку, сгенерированную из случайной заметки хранилища."""
+    from client.orchestrator import generate_flashcard
+
+    exclude_list = [p for p in exclude.split(",") if p]
+    card = await generate_flashcard(_model, _mcp_client, _config, exclude_list)
+    return card
+
+
 @app.websocket("/ws")
 async def chat_ws(websocket: WebSocket):
     await websocket.accept()
@@ -87,11 +98,11 @@ async def chat_ws(websocket: WebSocket):
 # Inline HTML / CSS / JS  (no external files needed)
 # ---------------------------------------------------------------------------
 _HTML = """<!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Obsidian MCP Chat</title>
+<title>Obsidian MCP Чат</title>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -122,7 +133,7 @@ _HTML = """<!DOCTYPE html>
     flex-direction: column;
   }
 
-  /* ── Header ── */
+  /* ── Шапка ── */
   header {
     padding: 14px 20px;
     background: var(--surface);
@@ -140,7 +151,33 @@ _HTML = """<!DOCTYPE html>
   }
   .dot.offline { background: var(--muted); }
 
-  /* ── Chat area ── */
+  /* ── Переключатель режима ── */
+  .mode-toggle {
+    margin-left: auto;
+    display: flex;
+    gap: 4px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 3px;
+  }
+  .mode-btn {
+    background: none;
+    border: none;
+    border-radius: 6px;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: .82rem;
+    font-weight: 600;
+    padding: 4px 14px;
+    transition: background .15s, color .15s;
+  }
+  .mode-btn.active {
+    background: var(--surface);
+    color: var(--accent);
+  }
+
+  /* ── Область чата ── */
   #chat {
     flex: 1;
     overflow-y: auto;
@@ -151,7 +188,7 @@ _HTML = """<!DOCTYPE html>
     scroll-behavior: smooth;
   }
 
-  /* ── Messages ── */
+  /* ── Сообщения ── */
   .msg {
     display: flex;
     flex-direction: column;
@@ -185,7 +222,7 @@ _HTML = """<!DOCTYPE html>
     border: 1px solid var(--err-txt);
   }
 
-  /* Markdown inside bubbles */
+  /* Markdown внутри пузырей */
   .bubble h1,.bubble h2,.bubble h3 { margin: .6em 0 .3em; color: var(--accent); }
   .bubble p  { margin: .3em 0; }
   .bubble ul,.bubble ol { padding-left: 1.4em; margin: .3em 0; }
@@ -211,7 +248,7 @@ _HTML = """<!DOCTYPE html>
     margin: .3em 0;
   }
 
-  /* ── Tool activity chips ── */
+  /* ── Индикаторы инструментов ── */
   .tool-chip {
     display: inline-flex;
     align-items: center;
@@ -237,7 +274,7 @@ _HTML = """<!DOCTYPE html>
   .tool-chip.done .spinner { display: none; }
   .tool-chip.done::before { content: '✓'; font-size: .75rem; }
 
-  /* ── Thinking indicator ── */
+  /* ── Индикатор «думает» ── */
   .thinking {
     display: flex; gap: 4px; align-items: center;
     padding: 10px 14px;
@@ -258,7 +295,7 @@ _HTML = """<!DOCTYPE html>
     30%          { transform: translateY(-5px); }
   }
 
-  /* ── Input row ── */
+  /* ── Поле ввода ── */
   #input-row {
     padding: 12px 16px;
     background: var(--surface);
@@ -301,21 +338,128 @@ _HTML = """<!DOCTYPE html>
   }
   #send:hover  { opacity: .85; }
   #send:disabled { opacity: .4; cursor: default; }
+
+  /* ── Карточки ── */
+  #flashcard-panel {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    padding: 24px 16px;
+    gap: 20px;
+  }
+
+  .fc-card {
+    perspective: 1000px;
+    width: 620px;
+    max-width: 90vw;
+    height: 270px;
+    cursor: pointer;
+  }
+  .fc-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform .45s ease;
+  }
+  .fc-card.flipped .fc-inner { transform: rotateY(180deg); }
+
+  .fc-front, .fc-back {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 24px;
+    font-size: 1rem;
+    line-height: 1.6;
+    text-align: center;
+  }
+  .fc-front {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    flex-direction: column;
+    gap: 10px;
+  }
+  .fc-front-label {
+    font-size: .72rem;
+    color: var(--muted);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .fc-back {
+    background: var(--tool-bg);
+    border: 1px solid var(--tool-txt);
+    color: var(--text);
+    transform: rotateY(180deg);
+    flex-direction: column;
+    gap: 12px;
+  }
+  .fc-source { font-size: .7rem; color: var(--muted); }
+
+  .fc-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  #fc-next {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: var(--radius);
+    padding: 9px 24px;
+    font-size: .9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .2s;
+  }
+  #fc-next:hover { opacity: .85; }
+  #fc-next:disabled { opacity: .4; cursor: default; }
+  .fc-hint { font-size: .76rem; color: var(--muted); }
 </style>
 </head>
 <body>
 
 <header>
   <div class="dot" id="dot"></div>
-  <h1>Obsidian MCP Chat</h1>
-  <span>Your notes are the primary source of truth</span>
+  <h1>Obsidian MCP Чат</h1>
+  <span>Ваши заметки — главный источник истины</span>
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="btn-chat" onclick="setMode('chat')">Чат</button>
+    <button class="mode-btn" id="btn-flash" onclick="setMode('flashcards')">Карточки</button>
+  </div>
 </header>
 
 <div id="chat"></div>
 
+<div id="flashcard-panel">
+  <div id="fc-card" class="fc-card" onclick="flipCard()" title="Нажмите, чтобы перевернуть">
+    <div class="fc-inner">
+      <div class="fc-front">
+        <span class="fc-front-label">Вопрос</span>
+        <p id="fc-question">Генерация…</p>
+      </div>
+      <div class="fc-back">
+        <p id="fc-answer"></p>
+        <p class="fc-source" id="fc-source"></p>
+      </div>
+    </div>
+  </div>
+  <div class="fc-controls">
+    <button id="fc-next" onclick="nextCard()">Следующая карточка →</button>
+    <p class="fc-hint">Нажмите на карточку или Space, чтобы перевернуть · → или N — следующая</p>
+  </div>
+</div>
+
 <div id="input-row">
-  <textarea id="msg" rows="1" placeholder="Ask about your notes… (Enter to send, Shift+Enter for newline)"></textarea>
-  <button id="send">Send</button>
+  <textarea id="msg" rows="1" placeholder="Спросите о ваших заметках… (Enter — отправить, Shift+Enter — перенос строки)"></textarea>
+  <button id="send">Отправить</button>
 </div>
 
 <script>
@@ -327,10 +471,62 @@ _HTML = """<!DOCTYPE html>
   const dot     = document.getElementById('dot');
 
   let ws = null;
-  let botMsg = null;      // current bot message element being built
-  let toolsEl = null;     // container for tool chips above bot message
-  let thinking = null;    // thinking indicator element
+  let toolsEl = null;
+  let thinking = null;
   let busy = false;
+
+  // ── Переключение режима ────────────────────────────────────────────────
+  let mode = 'chat';
+  let seenPaths = [];
+  let cardFlipped = false;
+
+  function setMode(m) {
+    mode = m;
+    chat.style.display           = m === 'chat'       ? 'flex' : 'none';
+    document.getElementById('input-row').style.display
+                                 = m === 'chat'       ? 'flex' : 'none';
+    document.getElementById('flashcard-panel').style.display
+                                 = m === 'flashcards' ? 'flex' : 'none';
+    document.getElementById('btn-chat').classList.toggle('active', m === 'chat');
+    document.getElementById('btn-flash').classList.toggle('active', m === 'flashcards');
+    if (m === 'flashcards' && seenPaths.length === 0) nextCard();
+  }
+
+  async function nextCard() {
+    cardFlipped = false;
+    document.getElementById('fc-card').classList.remove('flipped');
+    document.getElementById('fc-question').textContent = 'Генерация…';
+    document.getElementById('fc-answer').textContent   = '';
+    document.getElementById('fc-source').textContent   = '';
+    document.getElementById('fc-next').disabled = true;
+
+    try {
+      const exclude = seenPaths.join(',');
+      const res  = await fetch(`/flashcard?exclude=${encodeURIComponent(exclude)}`);
+      if (!res.ok) throw new Error(`Ошибка сервера ${res.status}`);
+      const card = await res.json();
+      document.getElementById('fc-question').textContent = card.question || '(нет вопроса)';
+      document.getElementById('fc-answer').textContent   = card.answer   || '(нет ответа)';
+      document.getElementById('fc-source').textContent   = card.source   ? `📄 ${card.source}` : '';
+      if (card.source) seenPaths.push(card.source);
+    } catch (err) {
+      document.getElementById('fc-question').textContent = `Ошибка: ${err.message}`;
+    } finally {
+      document.getElementById('fc-next').disabled = false;
+    }
+  }
+
+  function flipCard() {
+    cardFlipped = !cardFlipped;
+    document.getElementById('fc-card').classList.toggle('flipped', cardFlipped);
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (mode === 'flashcards') {
+      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipCard(); }
+      if (e.key === 'ArrowRight' || e.key === 'n') nextCard();
+    }
+  });
 
   // ── WebSocket ──────────────────────────────────────────────────────────
   function connect() {
@@ -363,7 +559,6 @@ _HTML = """<!DOCTYPE html>
         scrollBottom();
 
       } else if (ev.type === 'tool_end') {
-        // Mark matching chip as done
         if (toolsEl) {
           const chip = toolsEl.querySelector(`[data-tool="${ev.tool}"]:not(.done)`);
           if (chip) chip.classList.add('done');
@@ -384,7 +579,7 @@ _HTML = """<!DOCTYPE html>
     };
   }
 
-  // ── Message helpers ────────────────────────────────────────────────────
+  // ── Вспомогательные функции ────────────────────────────────────────────
   function appendUser(text) {
     const el = document.createElement('div');
     el.className = 'msg user';
@@ -431,11 +626,11 @@ _HTML = """<!DOCTYPE html>
 
   function formatTool(tool, args) {
     const map = {
-      search_notes:  a => `🔍 Searching: ${a.query || ''}`,
-      read_note:     a => `📄 Reading: ${a.path || ''}`,
-      list_notes:    _  => '📋 Listing notes',
-      search_by_tag: a => `🏷 Tag: ${a.tag || ''}`,
-      get_backlinks: a => `🔗 Backlinks: ${a.note_name || ''}`,
+      search_notes:  a => `🔍 Поиск: ${a.query || ''}`,
+      read_note:     a => `📄 Читаю: ${a.path || ''}`,
+      list_notes:    _  => '📋 Список заметок',
+      search_by_tag: a => `🏷 Тег: ${a.tag || ''}`,
+      get_backlinks: a => `🔗 Ссылки: ${a.note_name || ''}`,
     };
     return (map[tool] || (() => `⚙ ${tool}`))(args || {});
   }
@@ -448,7 +643,7 @@ _HTML = """<!DOCTYPE html>
     requestAnimationFrame(() => { chat.scrollTop = chat.scrollHeight; });
   }
 
-  // ── Send ───────────────────────────────────────────────────────────────
+  // ── Отправка сообщения ─────────────────────────────────────────────────
   function setBusy(val) {
     busy = val;
     sendBtn.disabled = val;
@@ -473,7 +668,6 @@ _HTML = """<!DOCTYPE html>
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
   });
 
-  // Auto-resize textarea
   msgEl.addEventListener('input', () => {
     msgEl.style.height = 'auto';
     msgEl.style.height = Math.min(msgEl.scrollHeight, 140) + 'px';
