@@ -76,19 +76,30 @@ class MCPClient:
     async def call_tool(self, name: str, arguments: dict[str, Any]) -> Any:
         """
         Call a named tool and return the parsed result.
-        Tool results are JSON-decoded when possible; otherwise returned as raw text.
+
+        FastMCP serialises list returns as one TextContent per element, so we
+        collect ALL text items before deciding how to parse.
         """
         result = await self._session.call_tool(name, arguments)
 
         if not result.content:
             return None
 
-        first = result.content[0]
-        if not hasattr(first, "text"):
+        texts = [item.text for item in result.content if hasattr(item, "text")]
+        if not texts:
             return result.content
 
-        text = first.text
-        try:
-            return json.loads(text)
-        except (json.JSONDecodeError, ValueError):
-            return text
+        if len(texts) == 1:
+            try:
+                return json.loads(texts[0])
+            except (json.JSONDecodeError, ValueError):
+                return texts[0]
+
+        # Multiple text items → try to parse each and return as list
+        parsed = []
+        for t in texts:
+            try:
+                parsed.append(json.loads(t))
+            except (json.JSONDecodeError, ValueError):
+                parsed.append(t)
+        return parsed
