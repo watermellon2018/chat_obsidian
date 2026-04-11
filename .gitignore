@@ -6,17 +6,32 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+*.egg
 
 # Virtual environment
 venv/
 .venv/
 env/
+.conda/
 
-# Environment variables (contains API keys)
+# Environment variables — содержат API-ключи, НИКОГДА не коммитить
 .env
-.env.example
+.env.*
+!.env.example
 
 # IDE
 .vscode/
 .idea/
 *.swp
+*.swo
+.DS_Store
+
+# Логи
+*.log
+logs/
+
+# Хранилище Obsidian (локальные заметки пользователя)
+vault/
+
+# Claude Code
+.claude/worktrees/
