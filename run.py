@@ -2,14 +2,14 @@
 Entry point for the Obsidian MCP Chat system.
 
 Usage:
-    python run.py                                      # Web UI on :7860 (default)
-    python run.py --ui web --port 8080                 # Custom port
-    python run.py --ui cli                             # Terminal chat
-    python run.py --model ollama                       # Local Ollama
+    python run.py                          # Web UI on :7860 (default)
+    python run.py --port 8080              # Custom port
+    python run.py --model ollama           # Local Ollama
+    python run.py --ui cli                 # Terminal chat
     python run.py --model ollama --ollama-model llama3.2:3b
 
 Prerequisites:
-    Gemini:  Set GEMINI_API_KEY in .env  (get key: https://aistudio.google.com)
+    Gemini:  Set GEMINI_API_KEY in .env  (https://aistudio.google.com)
     Ollama:  `ollama serve` running + model pulled
              e.g. `ollama pull qwen2.5:7b-instruct-q4_K_M`
 """
@@ -18,8 +18,13 @@ from __future__ import annotations
 import argparse
 import asyncio
 import sys
+from pathlib import Path
 
-from config import Config
+# ── Add backend/ to sys.path so all backend imports resolve correctly ────────
+BACKEND_DIR = Path(__file__).parent / "backend"
+sys.path.insert(0, str(BACKEND_DIR))
+
+from config import Config  # noqa: E402  (import after sys.path setup)
 
 
 def parse_args() -> argparse.Namespace:
@@ -69,7 +74,7 @@ def build_model(config: Config):
             sys.exit(1)
         return GeminiModel(config)
 
-    elif config.model_backend == "ollama":
+    if config.model_backend == "ollama":
         from model.ollama_model import OllamaModel
         return OllamaModel(config)
 
@@ -78,25 +83,46 @@ def build_model(config: Config):
 
 def run_web(model, config: Config, port: int) -> None:
     import uvicorn
-    import ui.web as web_module
+    from fastapi.responses import FileResponse
+    from api.app import create_app
 
-    # Inject model + config before uvicorn starts accepting requests
-    web_module._model = model
-    web_module._config = config
+    app = create_app(model, config)
+
+    # ── Serve the frontend HTML at / for local development ──────────────
+    # In production, nginx serves frontend/src/index.html directly.
+    # When running `python run.py`, this route handles it instead.
+    frontend_html = Path(__file__).parent / "frontend" / "src" / "index.html"
+
+    @app.get("/")
+    async def serve_frontend():
+        return FileResponse(str(frontend_html))
 
     print(f"Starting Obsidian MCP Chat → http://localhost:{port}")
-    uvicorn.run(web_module.app, host="0.0.0.0", port=port, log_level="warning")
+    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
 
 
 async def run_cli(model, config: Config) -> None:
     from client.mcp_client import MCPClient
-    from client.orchestrator import Orchestrator
-    from ui.cli import CLI
+    from services.orchestrator import Orchestrator
+
+    print("\033[1mObsidian MCP Chat (CLI)\033[0m")
+    print("Your notes are the primary source of truth.")
+    print("Type \033[1mquit\033[0m or press Ctrl+C to exit.")
+    print("-" * 50)
 
     async with MCPClient() as mcp_client:
         orchestrator = Orchestrator(model, mcp_client, config)
-        cli = CLI(orchestrator)
-        await cli.run()
+        while True:
+            try:
+                user_input = input("\nYou: ").strip()
+            except (KeyboardInterrupt, EOFError):
+                print("\nGoodbye!")
+                break
+            if not user_input or user_input.lower() in ("quit", "exit", "выход"):
+                print("Goodbye!")
+                break
+            answer = await orchestrator.handle_query(user_input)
+            print(f"\nBot: {answer}")
 
 
 def main() -> None:

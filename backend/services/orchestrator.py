@@ -85,7 +85,7 @@ class Orchestrator:
                     yield {"type": "done", "content": text}
                     return
 
-            yield {"type": "done", "content": "[Ошибка: превышено максимальное количество шагов]"}
+            yield {"type": "done", "content": "[Error: maximum number of steps exceeded]"}
 
         except Exception as exc:
             yield {"type": "error", "content": str(exc)}
@@ -129,65 +129,10 @@ class Orchestrator:
                 self._messages.append({"role": "assistant", "content": text})
                 return text
 
-        return "[Ошибка: превышено максимальное количество шагов без финального ответа]"
+        return "[Error: maximum number of steps exceeded without a final answer]"
 
     async def _ensure_tools(self) -> list[dict]:
         if self._tools is None:
             self._tools = await self._mcp.list_tools()
         return self._tools
 
-
-# ------------------------------------------------------------------
-# Flashcard generation (standalone — does not touch chat history)
-# ------------------------------------------------------------------
-
-async def generate_flashcard(
-    model: BaseModel,
-    mcp_client: MCPClient,
-    config: Config,
-    exclude: list[str] | None = None,
-) -> dict:
-    """
-    Pick a random vault note and generate a Q&A flashcard via the model.
-
-    Returns: {"question": "...", "answer": "...", "source": "path"}
-
-    RAG hook: in the future, replace the random note selection with a
-    retrieval step from services.retrieval.RetrievalService.
-    """
-    import random
-
-    from prompts import FLASHCARD_PROMPT
-
-    notes_raw = await mcp_client.call_tool("list_notes", {})
-    notes: list[dict] = (
-        json.loads(notes_raw) if isinstance(notes_raw, str) else notes_raw
-    )
-
-    candidates = [n for n in notes if n["path"] not in (exclude or [])]
-    if not candidates:
-        candidates = notes  # all seen → reset cycle
-
-    note = random.choice(candidates)
-    content_raw = await mcp_client.call_tool("read_note", {"path": note["path"]})
-    content_obj: dict = (
-        json.loads(content_raw) if isinstance(content_raw, str) else content_raw
-    )
-    note_text = content_obj.get("content", "")
-
-    messages = [
-        {"role": "system", "content": FLASHCARD_PROMPT},
-        {"role": "user", "content": f"Note title: {note['title']}\n\n{note_text}"},
-    ]
-    response = await model.chat(messages, tools=[])
-    raw_text = response.text.strip()
-
-    if raw_text.startswith("```"):
-        raw_text = raw_text.split("```")[1]
-        if raw_text.startswith("json"):
-            raw_text = raw_text[4:]
-        raw_text = raw_text.strip()
-
-    card: dict = json.loads(raw_text)
-    card["source"] = note["path"]
-    return card

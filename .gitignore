@@ -35,3 +35,5 @@ vault/
 
 # Claude Code
 .claude/worktrees/
+
+db/ 
