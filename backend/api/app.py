@@ -23,8 +23,21 @@ async def lifespan(app: FastAPI):
     import api.dependencies as deps
     from client.mcp_client import MCPClient
 
+    from services.rag import RagChain
+
     deps._mcp_client = MCPClient()
     await deps._mcp_client.__aenter__()
+
+    # RagChain loads FAISS from disk once; shared across all requests.
+    # If FAISS is unavailable (index not built yet), we log a warning and
+    # continue — MCP chat still works; RAG endpoints will return a 503.
+    try:
+        deps._rag_chain = RagChain(deps._model)
+        print("FAISS index loaded successfully.")
+    except Exception as exc:
+        print(f"WARNING: Could not load FAISS index — RAG features disabled. ({exc})")
+        deps._rag_chain = None
+
     try:
         yield
     finally:
