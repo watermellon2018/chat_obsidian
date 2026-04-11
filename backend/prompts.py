@@ -166,6 +166,15 @@ Output rules:
 Example output:
 {"question": "Why does BM25 use a saturation function for term frequency?", "answer": "BM25 applies a saturation function to term frequency to prevent a single very frequent term from dominating the score. Beyond a certain count the marginal contribution of each additional occurrence decreases, which better models real-world relevance. This makes BM25 more robust than raw TF-IDF for long documents."}"""
 
+LANGUAGE_INSTRUCTION: dict[str, str] = {
+    "en": "",  # English is the model default — no extra instruction needed
+    "ru": (
+        "IMPORTANT: You must write your entire response in Russian. "
+        "This applies to all text you produce: questions, answers, explanations, "
+        "section headings, and any other output. Do not use English."
+    ),
+}
+
 RAG_TOPIC_EXTRACTION_PROMPT = """You are a topic extraction assistant.
 
 You will be given a text fragment from a personal knowledge base.

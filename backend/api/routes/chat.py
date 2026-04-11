@@ -33,9 +33,10 @@ async def chat_ws(websocket: WebSocket) -> None:
         while True:
             data = await websocket.receive_json()
             message = data.get("message", "").strip()
+            language = data.get("language", "en")
             if not message:
                 continue
-            async for event in orchestrator.handle_query_stream(message):
+            async for event in orchestrator.handle_query_stream(message, language=language):
                 await websocket.send_json(event)
     except WebSocketDisconnect:
         pass
@@ -64,11 +65,12 @@ async def rag_ws(websocket: WebSocket) -> None:
         while True:
             data = await websocket.receive_json()
             message = data.get("message", "").strip()
+            language = data.get("language", "en")
             if not message:
                 continue
 
             try:
-                result = await rag.ask(message)
+                result = await rag.ask(message, language=language)
                 await websocket.send_json({
                     "type": "done",
                     "content": result.answer,
@@ -82,7 +84,7 @@ async def rag_ws(websocket: WebSocket) -> None:
 
 
 @router.get("/flashcard/batch")
-async def get_flashcard_batch(exclude_topics: str = "") -> dict:
+async def get_flashcard_batch(exclude_topics: str = "", lang: str = "en") -> dict:
     """
     Generates a batch of 3-6 flashcards on one topic from the knowledge base.
 
@@ -108,6 +110,7 @@ async def get_flashcard_batch(exclude_topics: str = "") -> dict:
             model=model,
             retrieval=rag._retrieval,
             exclude_topics=exclude_list,
+            language=lang,
         )
     except Exception as exc:
         log.exception("generate_flashcard_batch failed")

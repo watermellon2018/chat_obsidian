@@ -16,7 +16,7 @@ import json
 from client.mcp_client import MCPClient
 from config import Config
 from model.base import BaseModel
-from prompts import DEVELOPER_PROMPT, SYSTEM_PROMPT, TOOL_POLICY
+from prompts import DEVELOPER_PROMPT, LANGUAGE_INSTRUCTION, SYSTEM_PROMPT, TOOL_POLICY
 
 
 class Orchestrator:
@@ -34,7 +34,7 @@ class Orchestrator:
         ]
         self._tools: list[dict] | None = None
 
-    async def handle_query_stream(self, user_message: str):
+    async def handle_query_stream(self, user_message: str, language: str = "en"):
         """
         Async generator that yields real-time events while processing.
 
@@ -43,9 +43,17 @@ class Orchestrator:
           {"type": "tool_end",   "tool": name, "preview": "..."}
           {"type": "done",       "content": "final answer text"}
           {"type": "error",      "content": "error message"}
+
+        Parameters
+        ----------
+        language : "en" | "ru" — response language for the model
         """
         tools = await self._ensure_tools()
-        self._messages.append({"role": "user", "content": user_message})
+
+        # Append language instruction so the model responds in the right language
+        lang_note = LANGUAGE_INSTRUCTION.get(language, "")
+        content = f"{user_message}\n\n{lang_note}" if lang_note else user_message
+        self._messages.append({"role": "user", "content": content})
 
         try:
             for _round in range(self._config.max_tool_rounds):
@@ -90,10 +98,12 @@ class Orchestrator:
         except Exception as exc:
             yield {"type": "error", "content": str(exc)}
 
-    async def handle_query(self, user_message: str) -> str:
+    async def handle_query(self, user_message: str, language: str = "en") -> str:
         """Blocking version used by the CLI."""
         tools = await self._ensure_tools()
-        self._messages.append({"role": "user", "content": user_message})
+        lang_note = LANGUAGE_INSTRUCTION.get(language, "")
+        content = f"{user_message}\n\n{lang_note}" if lang_note else user_message
+        self._messages.append({"role": "user", "content": content})
 
         for _round in range(self._config.max_tool_rounds):
             response = await self._model.chat(self._messages, tools)

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Obsidian MCP Чат</title>
+<title>Obsidian MCP Chat</title>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -36,7 +36,7 @@
     flex-direction: column;
   }
 
-  /* ── Шапка ── */
+  /* ── Header ── */
   header {
     padding: 12px 20px;
     background: var(--surface);
@@ -55,7 +55,7 @@
   }
   .dot.offline { background: var(--muted); }
 
-  /* ── Переключатели ── */
+  /* ── Toggle groups ── */
   .toggle-group {
     margin-left: auto;
     display: flex;
@@ -87,16 +87,12 @@
     color: var(--accent);
   }
 
-  /* Маленький переключатель MCP / RAG */
-  #chat-sub-toggle {
-    font-size: .75rem;
-  }
-  #chat-sub-toggle .toggle-btn {
-    font-size: .75rem;
-    padding: 3px 10px;
-  }
+  #chat-sub-toggle .toggle-btn { font-size: .75rem; padding: 3px 10px; }
 
-  /* ── Область чата ── */
+  /* Language toggle — slightly smaller */
+  #lang-toggle .toggle-btn { font-size: .78rem; padding: 4px 11px; }
+
+  /* ── Chat area ── */
   #chat {
     flex: 1;
     overflow-y: auto;
@@ -107,7 +103,7 @@
     scroll-behavior: smooth;
   }
 
-  /* ── Сообщения ── */
+  /* ── Messages ── */
   .msg {
     display: flex;
     flex-direction: column;
@@ -126,280 +122,125 @@
     font-size: .92rem;
     word-break: break-word;
   }
-  .msg.user .bubble {
-    background: var(--user-bg);
-    border-bottom-right-radius: 3px;
-  }
-  .msg.bot .bubble {
-    background: var(--bot-bg);
-    border: 1px solid var(--border);
-    border-bottom-left-radius: 3px;
-  }
-  .msg.error .bubble {
-    background: var(--err-bg);
-    color: var(--err-txt);
-    border: 1px solid var(--err-txt);
-  }
+  .msg.user .bubble { background: var(--user-bg); border-bottom-right-radius: 3px; }
+  .msg.bot  .bubble { background: var(--bot-bg); border: 1px solid var(--border); border-bottom-left-radius: 3px; }
+  .msg.error .bubble { background: var(--err-bg); color: var(--err-txt); border: 1px solid var(--err-txt); }
 
-  /* Markdown внутри пузырей */
+  /* Markdown inside bubbles */
   .bubble h1,.bubble h2,.bubble h3 { margin: .6em 0 .3em; color: var(--accent); }
   .bubble p  { margin: .3em 0; }
   .bubble ul,.bubble ol { padding-left: 1.4em; margin: .3em 0; }
-  .bubble code {
-    background: rgba(255,255,255,.07);
-    padding: 1px 5px; border-radius: 4px;
-    font-size: .85em; font-family: monospace;
-  }
-  .bubble pre {
-    background: rgba(255,255,255,.05);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 10px 12px;
-    overflow-x: auto;
-    margin: .5em 0;
-  }
+  .bubble code { background: rgba(255,255,255,.07); padding: 1px 5px; border-radius: 4px; font-size: .85em; font-family: monospace; }
+  .bubble pre { background: rgba(255,255,255,.05); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; overflow-x: auto; margin: .5em 0; }
   .bubble pre code { background: none; padding: 0; }
   .bubble strong { color: var(--accent); }
-  .bubble blockquote {
-    border-left: 3px solid var(--accent);
-    padding-left: 10px;
-    color: var(--muted);
-    margin: .3em 0;
-  }
+  .bubble blockquote { border-left: 3px solid var(--accent); padding-left: 10px; color: var(--muted); margin: .3em 0; }
 
-  /* ── Источники под ответом ── */
-  .sources {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 6px;
-    padding-left: 2px;
-  }
+  /* ── Source tags ── */
+  .sources { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; padding-left: 2px; }
   .source-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: .74rem;
-    color: var(--src-txt);
-    background: var(--src-bg);
-    border: 1px solid var(--src-txt);
-    padding: 2px 9px;
-    border-radius: 20px;
-    text-decoration: none;
-    transition: opacity .15s;
-    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: .74rem; color: var(--src-txt); background: var(--src-bg);
+    border: 1px solid var(--src-txt); padding: 2px 9px; border-radius: 20px;
+    text-decoration: none; transition: opacity .15s; cursor: pointer;
   }
   .source-tag:hover { opacity: .8; }
 
-  /* ── Индикаторы инструментов ── */
+  /* ── Tool chips ── */
   .tool-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: .78rem;
-    color: var(--tool-txt);
-    background: var(--tool-bg);
-    border: 1px solid var(--tool-txt);
-    padding: 3px 10px;
-    border-radius: 20px;
-    margin-bottom: 4px;
-    animation: fadeIn .15s ease;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: .78rem; color: var(--tool-txt); background: var(--tool-bg);
+    border: 1px solid var(--tool-txt); padding: 3px 10px; border-radius: 20px;
+    margin-bottom: 4px; animation: fadeIn .15s ease;
   }
   .tool-chip .spinner {
-    width: 10px; height: 10px;
-    border: 2px solid transparent;
-    border-top-color: var(--tool-txt);
-    border-radius: 50%;
-    animation: spin .7s linear infinite;
-    flex-shrink: 0;
+    width: 10px; height: 10px; border: 2px solid transparent;
+    border-top-color: var(--tool-txt); border-radius: 50%;
+    animation: spin .7s linear infinite; flex-shrink: 0;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
   .tool-chip.done .spinner { display: none; }
   .tool-chip.done::before { content: '✓'; font-size: .75rem; }
 
-  /* ── Индикатор «думает» ── */
+  /* ── Thinking indicator ── */
   .thinking {
     display: flex; gap: 4px; align-items: center;
-    padding: 10px 14px;
-    background: var(--bot-bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    border-bottom-left-radius: 3px;
+    padding: 10px 14px; background: var(--bot-bg); border: 1px solid var(--border);
+    border-radius: var(--radius); border-bottom-left-radius: 3px;
   }
-  .thinking span {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: var(--muted);
-    animation: bounce .9s infinite;
-  }
+  .thinking span { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: bounce .9s infinite; }
   .thinking span:nth-child(2) { animation-delay: .15s; }
   .thinking span:nth-child(3) { animation-delay: .30s; }
-  @keyframes bounce {
-    0%,60%,100% { transform: translateY(0); }
-    30%          { transform: translateY(-5px); }
-  }
+  @keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
 
-  /* ── Поле ввода ── */
+  /* ── Input row ── */
   #input-row {
-    padding: 12px 16px;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    display: flex;
-    gap: 8px;
-    align-items: flex-end;
-    flex-shrink: 0;
+    padding: 12px 16px; background: var(--surface); border-top: 1px solid var(--border);
+    display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0;
   }
   #msg {
-    flex: 1;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    font-family: var(--font);
-    font-size: .92rem;
-    padding: 10px 14px;
-    resize: none;
-    max-height: 140px;
-    outline: none;
-    transition: border-color .2s;
-    overflow-y: auto;
+    flex: 1; background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--text); font-family: var(--font);
+    font-size: .92rem; padding: 10px 14px; resize: none; max-height: 140px;
+    outline: none; transition: border-color .2s; overflow-y: auto;
   }
   #msg:focus { border-color: var(--accent); }
   #msg::placeholder { color: var(--muted); }
 
   #send {
-    background: var(--accent);
-    color: var(--bg);
-    border: none;
-    border-radius: var(--radius);
-    padding: 10px 18px;
-    font-size: .9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: opacity .2s;
-    flex-shrink: 0;
-    height: 40px;
+    background: var(--accent); color: var(--bg); border: none;
+    border-radius: var(--radius); padding: 10px 18px; font-size: .9rem;
+    font-weight: 600; cursor: pointer; transition: opacity .2s; flex-shrink: 0; height: 40px;
   }
-  #send:hover  { opacity: .85; }
+  #send:hover { opacity: .85; }
   #send:disabled { opacity: .4; cursor: default; }
 
-  /* ── Панель карточек ── */
+  /* ── Flashcard panel ── */
   #flashcard-panel {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    padding: 20px 16px;
-    gap: 16px;
+    display: none; flex-direction: column; align-items: center;
+    justify-content: center; flex: 1; padding: 20px 16px; gap: 16px;
   }
 
-  /* Тема и прогресс */
-  .fc-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-  }
+  .fc-header { display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .fc-topic {
-    font-size: .82rem;
-    color: var(--accent);
-    background: var(--tool-bg);
-    border: 1px solid var(--tool-txt);
-    padding: 3px 14px;
-    border-radius: 20px;
-    max-width: 90vw;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: .82rem; color: var(--accent); background: var(--tool-bg);
+    border: 1px solid var(--tool-txt); padding: 3px 14px; border-radius: 20px;
+    max-width: 90vw; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .fc-progress {
-    font-size: .73rem;
-    color: var(--muted);
-  }
+  .fc-progress { font-size: .73rem; color: var(--muted); }
 
-  /* Карточка с 3D-переворотом */
-  .fc-card {
-    perspective: 1000px;
-    width: 620px;
-    max-width: 90vw;
-    height: 270px;
-    cursor: pointer;
-  }
+  .fc-card { perspective: 1000px; width: 620px; max-width: 90vw; height: 270px; cursor: pointer; }
   .fc-inner {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    transform-style: preserve-3d;
-    transition: transform .45s ease;
+    position: relative; width: 100%; height: 100%;
+    transform-style: preserve-3d; transition: transform .45s ease;
   }
   .fc-card.flipped .fc-inner { transform: rotateY(180deg); }
 
   .fc-front, .fc-back {
-    position: absolute;
-    inset: 0;
-    backface-visibility: hidden;
-    border-radius: var(--radius);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 28px 24px;
-    font-size: 1rem;
-    line-height: 1.6;
-    text-align: center;
+    position: absolute; inset: 0; backface-visibility: hidden;
+    border-radius: var(--radius); display: flex; align-items: center;
+    justify-content: center; padding: 28px 24px; font-size: 1rem; line-height: 1.6; text-align: center;
   }
-  .fc-front {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    flex-direction: column;
-    gap: 10px;
-  }
-  .fc-front-label {
-    font-size: .72rem;
-    color: var(--muted);
-    letter-spacing: .06em;
-    text-transform: uppercase;
-  }
-  .fc-back {
-    background: var(--tool-bg);
-    border: 1px solid var(--tool-txt);
-    color: var(--text);
-    transform: rotateY(180deg);
-    flex-direction: column;
-    gap: 12px;
-  }
+  .fc-front { background: var(--surface); border: 1px solid var(--border); color: var(--text); flex-direction: column; gap: 10px; }
+  .fc-front-label { font-size: .72rem; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+  .fc-back { background: var(--tool-bg); border: 1px solid var(--tool-txt); color: var(--text); transform: rotateY(180deg); flex-direction: column; gap: 12px; }
   .fc-source-link {
-    font-size: .73rem;
-    color: var(--src-txt);
-    background: var(--src-bg);
-    border: 1px solid var(--src-txt);
-    padding: 2px 10px;
-    border-radius: 20px;
-    text-decoration: none;
-    transition: opacity .15s;
+    font-size: .73rem; color: var(--src-txt); background: var(--src-bg);
+    border: 1px solid var(--src-txt); padding: 2px 10px; border-radius: 20px;
+    text-decoration: none; transition: opacity .15s;
   }
   .fc-source-link:hover { opacity: .8; }
 
-  .fc-controls {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
+  .fc-controls { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .fc-nav { display: flex; gap: 10px; }
+  #fc-prev, #fc-next {
+    background: var(--accent); color: var(--bg); border: none; border-radius: var(--radius);
+    padding: 9px 24px; font-size: .9rem; font-weight: 600; cursor: pointer; transition: opacity .2s;
   }
-  #fc-next {
-    background: var(--accent);
-    color: var(--bg);
-    border: none;
-    border-radius: var(--radius);
-    padding: 9px 24px;
-    font-size: .9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: opacity .2s;
-  }
+  #fc-prev { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+  #fc-prev:hover { opacity: .85; }
   #fc-next:hover { opacity: .85; }
-  #fc-next:disabled { opacity: .4; cursor: default; }
+  #fc-prev:disabled, #fc-next:disabled { opacity: .4; cursor: default; }
   .fc-hint { font-size: .76rem; color: var(--muted); }
 </style>
 </head>
@@ -407,19 +248,28 @@
 
 <header>
   <div class="dot" id="dot"></div>
-  <h1>Obsidian MCP Чат</h1>
-  <span>Ваши заметки — главный источник истины</span>
+  <h1 id="hdr-title">Obsidian MCP Chat</h1>
+  <span id="hdr-subtitle"></span>
   <div class="toggle-group">
-    <!-- Переключатель MCP / RAG (только в режиме чата) -->
+
+    <!-- Language toggle -->
+    <div class="toggle" id="lang-toggle">
+      <button class="toggle-btn" id="btn-en" onclick="setLang('en')">EN</button>
+      <button class="toggle-btn" id="btn-ru" onclick="setLang('ru')">RU</button>
+    </div>
+
+    <!-- MCP / RAG sub-toggle (chat mode only) -->
     <div class="toggle" id="chat-sub-toggle">
-      <button class="toggle-btn active" id="btn-mcp" onclick="setChatMode('mcp')" title="Чат через MCP-инструменты">MCP</button>
-      <button class="toggle-btn"        id="btn-rag" onclick="setChatMode('rag')" title="Чат через FAISS-поиск">RAG</button>
+      <button class="toggle-btn active" id="btn-mcp" onclick="setChatMode('mcp')">MCP</button>
+      <button class="toggle-btn"        id="btn-rag" onclick="setChatMode('rag')">RAG</button>
     </div>
-    <!-- Переключатель Чат / Карточки -->
+
+    <!-- Chat / Flashcards mode toggle -->
     <div class="toggle">
-      <button class="toggle-btn active" id="btn-chat"  onclick="setMode('chat')">Чат</button>
-      <button class="toggle-btn"        id="btn-flash" onclick="setMode('flashcards')">Карточки</button>
+      <button class="toggle-btn active" id="btn-chat"  onclick="setMode('chat')" ></button>
+      <button class="toggle-btn"        id="btn-flash" onclick="setMode('flashcards')"></button>
     </div>
+
   </div>
 </header>
 
@@ -427,15 +277,15 @@
 
 <div id="flashcard-panel">
   <div class="fc-header">
-    <div class="fc-topic" id="fc-topic">Загрузка темы…</div>
+    <div class="fc-topic"    id="fc-topic"></div>
     <div class="fc-progress" id="fc-progress"></div>
   </div>
 
-  <div id="fc-card" class="fc-card" onclick="flipCard()" title="Нажмите, чтобы перевернуть">
+  <div id="fc-card" class="fc-card" onclick="flipCard()">
     <div class="fc-inner">
       <div class="fc-front">
-        <span class="fc-front-label">Вопрос</span>
-        <p id="fc-question">Генерация…</p>
+        <span class="fc-front-label" id="fc-label"></span>
+        <p id="fc-question"></p>
       </div>
       <div class="fc-back">
         <p id="fc-answer"></p>
@@ -445,46 +295,150 @@
   </div>
 
   <div class="fc-controls">
-    <button id="fc-next" onclick="nextCard()">Следующая карточка →</button>
-    <p class="fc-hint">Нажмите на карточку или Space — перевернуть · → или N — следующая</p>
+    <div class="fc-nav">
+      <button id="fc-prev" onclick="prevCard()"></button>
+      <button id="fc-next" onclick="nextCard()"></button>
+    </div>
+    <p class="fc-hint" id="fc-hint"></p>
   </div>
 </div>
 
 <div id="input-row">
-  <textarea id="msg" rows="1"
-    placeholder="Спросите о ваших заметках… (Enter — отправить, Shift+Enter — перенос строки)">
-  </textarea>
-  <button id="send">Отправить</button>
+  <textarea id="msg" rows="1"></textarea>
+  <button id="send"></button>
 </div>
 
 <script>
   marked.setOptions({ breaks: true, gfm: true });
 
+  // ── i18n strings ──────────────────────────────────────────────────────────
+  const i18n = {
+    en: {
+      title:        'Obsidian MCP Chat',
+      subtitle:     'Your notes are the primary source of truth',
+      modeChat:     'Chat',
+      modeFlash:    'Flashcards',
+      placeholder:  'Ask about your notes… (Enter to send, Shift+Enter for newline)',
+      sendBtn:      'Send',
+      fcLabel:      'Question',
+      fcGenerating: 'Generating…',
+      fcTopicLoad:  'Loading topic…',
+      fcProgressLoad: 'Loading…',
+      fcPrev:       '← Previous',
+      fcNext:       'Next card →',
+      fcHint:       'Space — flip · ← / → navigate',
+      fcTopic:      t => `🎯 ${t}`,
+      topicLoading: 'Loading…',
+      serverErr:    s => `Server error ${s}`,
+      emptyBatch:   'Server returned an empty batch',
+      tools: {
+        search_notes:  a => `🔍 Search: ${a.query  || ''}`,
+        read_note:     a => `📄 Reading: ${a.path  || ''}`,
+        list_notes:    _  => '📋 List notes',
+        search_by_tag: a => `🏷 Tag: ${a.tag       || ''}`,
+        get_backlinks: a => `🔗 Backlinks: ${a.note_name || ''}`,
+      },
+    },
+    ru: {
+      title:        'Obsidian MCP Чат',
+      subtitle:     'Ваши заметки — главный источник истины',
+      modeChat:     'Чат',
+      modeFlash:    'Карточки',
+      placeholder:  'Спросите о ваших заметках… (Enter — отправить, Shift+Enter — перенос)',
+      sendBtn:      'Отправить',
+      fcLabel:      'Вопрос',
+      fcGenerating: 'Генерация…',
+      fcTopicLoad:  'Загрузка темы…',
+      fcProgressLoad: 'Загрузка…',
+      fcPrev:       '← Назад',
+      fcNext:       'Следующая →',
+      fcHint:       'Space — перевернуть · ← / → навигация',
+      fcTopic:      t => `🎯 ${t}`,
+      topicLoading: 'Загрузка…',
+      serverErr:    s => `Ошибка сервера ${s}`,
+      emptyBatch:   'Сервер вернул пустой батч',
+      tools: {
+        search_notes:  a => `🔍 Поиск: ${a.query  || ''}`,
+        read_note:     a => `📄 Читаю: ${a.path   || ''}`,
+        list_notes:    _  => '📋 Список заметок',
+        search_by_tag: a => `🏷 Тег: ${a.tag      || ''}`,
+        get_backlinks: a => `🔗 Ссылки: ${a.note_name || ''}`,
+      },
+    },
+  };
+
+  // ── State ─────────────────────────────────────────────────────────────────
   const chat    = document.getElementById('chat');
   const msgEl   = document.getElementById('msg');
   const sendBtn = document.getElementById('send');
   const dot     = document.getElementById('dot');
 
-  let ws = null;
-  let toolsEl = null;
-  let thinking = null;
-  let busy = false;
-
-  // ── Имя хранилища Obsidian (для ссылок obsidian://) ───────────────────
+  let ws        = null;
+  let toolsEl   = null;
+  let thinking  = null;
+  let busy      = false;
   let vaultName = '';
+
+  let lang     = localStorage.getItem('lang') || 'en';
+  let mode     = 'chat';
+  let chatMode = 'mcp';
+
+  let currentBatch = [];
+  let batchIndex   = 0;
+  let cardFlipped  = false;
+  let seenTopics   = [];
+
+  // ── Vault name for obsidian:// links ──────────────────────────────────────
   fetch('/info').then(r => r.json()).then(d => { vaultName = d.vault_name || ''; }).catch(() => {});
 
-  // ── Режим (chat / flashcards) и подрежим чата (mcp / rag) ────────────
-  let mode     = 'chat';
-  let chatMode = 'mcp';  // 'mcp' | 'rag'
+  // ── Language ──────────────────────────────────────────────────────────────
+  function t(key, ...args) {
+    const val = i18n[lang][key];
+    return typeof val === 'function' ? val(...args) : val;
+  }
 
+  function setLang(l) {
+    lang = l;
+    localStorage.setItem('lang', l);
+    document.documentElement.lang = l;
+    document.getElementById('btn-en').classList.toggle('active', l === 'en');
+    document.getElementById('btn-ru').classList.toggle('active', l === 'ru');
+    applyI18n();
+  }
+
+  function applyI18n() {
+    document.getElementById('hdr-title').textContent    = t('title');
+    document.getElementById('hdr-subtitle').textContent = t('subtitle');
+    document.getElementById('btn-chat').textContent     = t('modeChat');
+    document.getElementById('btn-flash').textContent    = t('modeFlash');
+    document.getElementById('send').textContent         = t('sendBtn');
+    document.getElementById('fc-prev').textContent      = t('fcPrev');
+    document.getElementById('fc-next').textContent      = t('fcNext');
+    document.getElementById('fc-hint').textContent      = t('fcHint');
+    document.getElementById('fc-label').textContent     = t('fcLabel');
+    msgEl.placeholder                                   = t('placeholder');
+
+    // If flashcard panel is active and has content, update dynamic strings
+    const topicEl = document.getElementById('fc-topic');
+    if (topicEl.textContent === i18n['en'].topicLoading ||
+        topicEl.textContent === i18n['ru'].topicLoading) {
+      topicEl.textContent = t('topicLoading');
+    }
+    const qEl = document.getElementById('fc-question');
+    if (qEl.textContent === i18n['en'].fcGenerating ||
+        qEl.textContent === i18n['ru'].fcGenerating) {
+      qEl.textContent = t('fcGenerating');
+    }
+  }
+
+  // ── Mode switching ────────────────────────────────────────────────────────
   function setMode(m) {
     mode = m;
-    chat.style.display              = m === 'chat'       ? 'flex'   : 'none';
-    document.getElementById('input-row').style.display   = m === 'chat'       ? 'flex'   : 'none';
+    chat.style.display                                     = m === 'chat'       ? 'flex' : 'none';
+    document.getElementById('input-row').style.display     = m === 'chat'       ? 'flex' : 'none';
     document.getElementById('flashcard-panel').style.display = m === 'flashcards' ? 'flex' : 'none';
-    document.getElementById('chat-sub-toggle').style.display = m === 'chat'    ? 'flex'   : 'none';
-    document.getElementById('btn-chat').classList.toggle('active', m === 'chat');
+    document.getElementById('chat-sub-toggle').style.display = m === 'chat'    ? 'flex' : 'none';
+    document.getElementById('btn-chat').classList.toggle('active',  m === 'chat');
     document.getElementById('btn-flash').classList.toggle('active', m === 'flashcards');
     if (m === 'flashcards' && currentBatch.length === 0) fetchBatch();
   }
@@ -493,42 +447,38 @@
     chatMode = m;
     document.getElementById('btn-mcp').classList.toggle('active', m === 'mcp');
     document.getElementById('btn-rag').classList.toggle('active', m === 'rag');
-    // Переподключиться к другому WebSocket-эндпоинту
     if (ws) { ws.onclose = null; ws.close(); ws = null; }
     connect();
   }
 
-  // ── Карточки: батчевый цикл ───────────────────────────────────────────
-  let currentBatch  = [];   // [{question, answer, source}, ...]
-  let batchIndex    = 0;
-  let cardFlipped   = false;
-  let seenTopics    = [];   // темы уже показанных батчей
-
+  // ── Flashcard batch ───────────────────────────────────────────────────────
   async function fetchBatch() {
-    document.getElementById('fc-next').disabled = true;
-    document.getElementById('fc-question').textContent = 'Генерация темы…';
+    document.getElementById('fc-prev').disabled     = true;
+    document.getElementById('fc-next').disabled     = true;
+    document.getElementById('fc-question').textContent = t('fcGenerating');
     document.getElementById('fc-answer').textContent   = '';
-    document.getElementById('fc-topic').textContent    = 'Загрузка…';
+    document.getElementById('fc-topic').textContent    = t('fcTopicLoad');
     document.getElementById('fc-progress').textContent = '';
     hideSourceLink();
 
     try {
       const exclude = seenTopics.join(',');
-      const res = await fetch(`/flashcard/batch?exclude_topics=${encodeURIComponent(exclude)}`);
-      if (!res.ok) throw new Error(`Ошибка сервера ${res.status}`);
+      const res = await fetch(
+        `/flashcard/batch?exclude_topics=${encodeURIComponent(exclude)}&lang=${lang}`
+      );
+      if (!res.ok) throw new Error(t('serverErr', res.status));
       const data = await res.json();
 
       currentBatch = data.cards || [];
       batchIndex   = 0;
-
-      if (currentBatch.length === 0) throw new Error('Сервер вернул пустой батч');
+      if (currentBatch.length === 0) throw new Error(t('emptyBatch'));
 
       seenTopics.push(data.topic);
-      document.getElementById('fc-topic').textContent = `🎯 ${data.topic}`;
+      document.getElementById('fc-topic').textContent = t('fcTopic', data.topic);
       showCard(0);
     } catch (err) {
-      document.getElementById('fc-question').textContent = `Ошибка: ${err.message}`;
-      document.getElementById('fc-topic').textContent = '—';
+      document.getElementById('fc-question').textContent = `⚠ ${err.message}`;
+      document.getElementById('fc-topic').textContent    = '—';
     } finally {
       document.getElementById('fc-next').disabled = false;
     }
@@ -537,28 +487,37 @@
   function showCard(index) {
     cardFlipped = false;
     document.getElementById('fc-card').classList.remove('flipped');
+    document.getElementById('fc-label').textContent = t('fcLabel');
 
     const card = currentBatch[index];
-    document.getElementById('fc-question').textContent = card.question || '(нет вопроса)';
-    document.getElementById('fc-answer').textContent   = card.answer   || '(нет ответа)';
-    document.getElementById('fc-progress').textContent =
-      `${index + 1} / ${currentBatch.length}`;
+    document.getElementById('fc-question').textContent = card.question || '—';
+    document.getElementById('fc-answer').textContent   = card.answer   || '—';
+    document.getElementById('fc-progress').textContent = `${index + 1} / ${currentBatch.length}`;
+
+    // Prev button: disabled on first card of the batch (can't go back across topics)
+    document.getElementById('fc-prev').disabled = index === 0;
 
     const src = card.source || '';
-    if (src && vaultName) {
-      showSourceLink(`obsidian://open?vault=${encodeURIComponent(vaultName)}&file=${encodeURIComponent(src)}`, `📄 ${src}`);
-    } else if (src) {
-      showSourceLink('#', `📄 ${src}`);
+    if (src) {
+      const href = vaultName
+        ? `obsidian://open?vault=${encodeURIComponent(vaultName)}&file=${encodeURIComponent(src)}`
+        : '#';
+      showSourceLink(href, `📄 ${src}`);
     } else {
       hideSourceLink();
     }
   }
 
+  function prevCard() {
+    if (batchIndex > 0) {
+      batchIndex--;
+      showCard(batchIndex);
+    }
+  }
+
   function showSourceLink(href, label) {
     const el = document.getElementById('fc-source-link');
-    el.href        = href;
-    el.textContent = label;
-    el.style.display = 'inline-flex';
+    el.href = href; el.textContent = label; el.style.display = 'inline-flex';
   }
   function hideSourceLink() {
     document.getElementById('fc-source-link').style.display = 'none';
@@ -570,9 +529,7 @@
     if (batchIndex < currentBatch.length) {
       showCard(batchIndex);
     } else {
-      // Батч исчерпан — загружаем следующую тему
-      currentBatch = [];
-      batchIndex   = 0;
+      currentBatch = []; batchIndex = 0;
       fetchBatch();
     }
   }
@@ -582,14 +539,15 @@
     document.getElementById('fc-card').classList.toggle('flipped', cardFlipped);
   }
 
-  document.addEventListener('keydown', (e) => {
+  document.addEventListener('keydown', e => {
     if (mode === 'flashcards') {
-      if (e.key === ' ')                            { e.preventDefault(); flipCard(); }
-      if (e.key === 'ArrowRight' || e.key === 'n')  { e.preventDefault(); nextCard(); }
+      if (e.key === ' ')                           { e.preventDefault(); flipCard(); }
+      if (e.key === 'ArrowRight' || e.key === 'n') { e.preventDefault(); nextCard(); }
+      if (e.key === 'ArrowLeft'  || e.key === 'p') { e.preventDefault(); prevCard(); }
     }
   });
 
-  // ── WebSocket ──────────────────────────────────────────────────────────
+  // ── WebSocket ─────────────────────────────────────────────────────────────
   function wsEndpoint() {
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
     return chatMode === 'rag'
@@ -599,101 +557,73 @@
 
   function connect() {
     ws = new WebSocket(wsEndpoint());
-
     ws.onopen  = () => dot.classList.remove('offline');
-    ws.onclose = () => {
-      dot.classList.add('offline');
-      setBusy(false);
-      setTimeout(connect, 2000);
-    };
-
-    ws.onmessage = (e) => {
+    ws.onclose = () => { dot.classList.add('offline'); setBusy(false); setTimeout(connect, 2000); };
+    ws.onmessage = e => {
       const ev = JSON.parse(e.data);
-
       if (ev.type === 'tool_start') {
-        // Только в MCP-режиме
         removeThinking();
-        if (!toolsEl) {
-          toolsEl = document.createElement('div');
-          toolsEl.className = 'msg bot';
-          chat.appendChild(toolsEl);
-        }
+        if (!toolsEl) { toolsEl = document.createElement('div'); toolsEl.className = 'msg bot'; chat.appendChild(toolsEl); }
         const chip = makeToolChip(ev.tool, ev.args);
         chip.dataset.tool = ev.tool;
         toolsEl.appendChild(chip);
         scrollBottom();
-
       } else if (ev.type === 'tool_end') {
         if (toolsEl) {
           const chip = toolsEl.querySelector(`[data-tool="${ev.tool}"]:not(.done)`);
           if (chip) chip.classList.add('done');
         }
-
       } else if (ev.type === 'done') {
-        removeThinking();
-        toolsEl = null;
+        removeThinking(); toolsEl = null;
         appendBot(ev.content, ev.sources || []);
         setBusy(false);
-
       } else if (ev.type === 'error') {
-        removeThinking();
-        toolsEl = null;
+        removeThinking(); toolsEl = null;
         appendError(ev.content);
         setBusy(false);
       }
     };
   }
 
-  // ── Вспомогательные функции ────────────────────────────────────────────
+  // ── Helpers ───────────────────────────────────────────────────────────────
   function appendUser(text) {
     const el = document.createElement('div');
     el.className = 'msg user';
     el.innerHTML = `<div class="bubble">${escHtml(text)}</div>`;
-    chat.appendChild(el);
-    scrollBottom();
+    chat.appendChild(el); scrollBottom();
   }
 
   function appendBot(markdown, sources) {
     const el = document.createElement('div');
     el.className = 'msg bot';
-
     let html = `<div class="bubble">${marked.parse(markdown)}</div>`;
-
-    // Источники: показываем только если сервер вернул их явно (RAG-режим)
     if (sources && sources.length > 0) {
-      const tagsHtml = sources.map(src => {
+      const tags = sources.map(src => {
         const href = (vaultName && src)
           ? `obsidian://open?vault=${encodeURIComponent(vaultName)}&file=${encodeURIComponent(src)}`
           : '#';
-        return `<a class="source-tag" href="${escHtml(href)}" title="Открыть в Obsidian">📄 ${escHtml(src)}</a>`;
+        return `<a class="source-tag" href="${escHtml(href)}" title="Open in Obsidian">📄 ${escHtml(src)}</a>`;
       }).join('');
-      html += `<div class="sources">${tagsHtml}</div>`;
+      html += `<div class="sources">${tags}</div>`;
     }
-
     el.innerHTML = html;
-    chat.appendChild(el);
-    scrollBottom();
+    chat.appendChild(el); scrollBottom();
   }
 
   function appendError(text) {
     const el = document.createElement('div');
     el.className = 'msg error';
     el.innerHTML = `<div class="bubble">⚠ ${escHtml(text)}</div>`;
-    chat.appendChild(el);
-    scrollBottom();
+    chat.appendChild(el); scrollBottom();
   }
 
   function showThinking() {
     thinking = document.createElement('div');
     thinking.className = 'msg bot';
     thinking.innerHTML = '<div class="thinking"><span></span><span></span><span></span></div>';
-    chat.appendChild(thinking);
-    scrollBottom();
+    chat.appendChild(thinking); scrollBottom();
   }
-
-  function removeThinking() {
-    if (thinking) { thinking.remove(); thinking = null; }
-  }
+  function removeThinking() { if (thinking) { thinking.remove(); thinking = null; } }
 
   function makeToolChip(tool, args) {
     const chip = document.createElement('div');
@@ -703,31 +633,15 @@
   }
 
   function formatTool(tool, args) {
-    const map = {
-      search_notes:  a => `🔍 Поиск: ${a.query || ''}`,
-      read_note:     a => `📄 Читаю: ${a.path || ''}`,
-      list_notes:    _  => '📋 Список заметок',
-      search_by_tag: a => `🏷 Тег: ${a.tag || ''}`,
-      get_backlinks: a => `🔗 Ссылки: ${a.note_name || ''}`,
-    };
+    const map = i18n[lang].tools;
     return (map[tool] || (() => `⚙ ${tool}`))(args || {});
   }
 
   function escHtml(s) {
-    return String(s)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
-
-  function scrollBottom() {
-    requestAnimationFrame(() => { chat.scrollTop = chat.scrollHeight; });
-  }
-
-  function setBusy(val) {
-    busy = val;
-    sendBtn.disabled = val;
-    msgEl.disabled   = val;
-  }
+  function scrollBottom() { requestAnimationFrame(() => { chat.scrollTop = chat.scrollHeight; }); }
+  function setBusy(val) { busy = val; sendBtn.disabled = val; msgEl.disabled = val; }
 
   function send() {
     const text = msgEl.value.trim();
@@ -735,20 +649,16 @@
     appendUser(text);
     showThinking();
     setBusy(true);
-    ws.send(JSON.stringify({ message: text }));
-    msgEl.value = '';
-    msgEl.style.height = 'auto';
+    ws.send(JSON.stringify({ message: text, language: lang }));
+    msgEl.value = ''; msgEl.style.height = 'auto';
   }
 
   sendBtn.addEventListener('click', send);
-  msgEl.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
-  });
-  msgEl.addEventListener('input', () => {
-    msgEl.style.height = 'auto';
-    msgEl.style.height = Math.min(msgEl.scrollHeight, 140) + 'px';
-  });
+  msgEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+  msgEl.addEventListener('input', () => { msgEl.style.height = 'auto'; msgEl.style.height = Math.min(msgEl.scrollHeight, 140) + 'px'; });
 
+  // ── Init ──────────────────────────────────────────────────────────────────
+  setLang(lang);   // apply stored/default language
   connect();
 </script>
 </body>

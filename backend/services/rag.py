@@ -20,6 +20,7 @@ from langchain_community.vectorstores import FAISS
 
 from model.base import BaseModel
 from prompts import (
+    LANGUAGE_INSTRUCTION,
     RAG_BATCH_FLASHCARD_PROMPT,
     RAG_FLASHCARD_PROMPT,
     RAG_SYSTEM_PROMPT,
@@ -49,7 +50,7 @@ class RagChain:
     # Public method
     # ------------------------------------------------------------------
 
-    async def ask(self, question: str, top_k: int = 3) -> RagAnswer:
+    async def ask(self, question: str, top_k: int = 3, language: str = "en") -> RagAnswer:
         """
         Accept a question, find relevant chunks, get an answer from the model.
 
@@ -57,10 +58,7 @@ class RagChain:
         ----------
         question : user question
         top_k    : how many chunks to pass into context (default 3)
-
-        Returns
-        ----------
-        RagAnswer with the answer text and list of sources used.
+        language : "en" | "ru" — response language
         """
         # ── Step 1: semantic search via FAISS ─────────────────────────
         chunks: list[SearchResult] = self._retrieval.search(question, top_k=top_k)
@@ -71,8 +69,11 @@ class RagChain:
         else:
             context_block = "No relevant fragments found in the knowledge base."
 
-        # ── Step 3: inject context into the system prompt ─────────────
+        # ── Step 3: inject context + language instruction into system prompt ──
+        lang_note = LANGUAGE_INSTRUCTION.get(language, "")
         system_prompt = RAG_SYSTEM_PROMPT.format(context=context_block)
+        if lang_note:
+            system_prompt = f"{system_prompt}\n\n{lang_note}"
 
         # ── Step 4: call the model (without MCP tools) ────────────────
         messages = [
@@ -184,6 +185,7 @@ async def generate_flashcard_batch(
     top_k: int = 5,
     min_cards: int = 3,
     max_cards: int = 6,
+    language: str = "en",
 ) -> dict:
     """
     Generates a batch of 3-6 flashcards on one topic:
@@ -240,8 +242,13 @@ async def generate_flashcard_batch(
     context_block = _format_context(chunks)
 
     # ── Step 4: generate the flashcard batch ──────────────────────────
+    lang_note = LANGUAGE_INSTRUCTION.get(language, "")
+    cards_system = (
+        f"{RAG_BATCH_FLASHCARD_PROMPT}\n\n{lang_note}" if lang_note
+        else RAG_BATCH_FLASHCARD_PROMPT
+    )
     cards_messages = [
-        {"role": "system", "content": RAG_BATCH_FLASHCARD_PROMPT},
+        {"role": "system", "content": cards_system},
         {
             "role": "user",
             "content": (
