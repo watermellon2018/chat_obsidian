@@ -1,0 +1,17 @@
+# MCP protocol
+mcp>=1.0.0
+
+# Model backends
+google-genai>=0.8.0
+ollama>=0.3.0
+
+# Search
+rank-bm25>=0.2.2
+
+# Configuration
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+
+# Web server
+fastapi>=0.100.0
+uvicorn[standard]>=0.20.0
