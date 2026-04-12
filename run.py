@@ -84,18 +84,24 @@ def build_model(config: Config):
 def run_web(model, config: Config, port: int) -> None:
     import uvicorn
     from fastapi.responses import FileResponse
+    from fastapi.staticfiles import StaticFiles
     from api.app import create_app
 
     app = create_app(model, config)
 
-    # ── Serve the frontend HTML at / for local development ──────────────
-    # In production, nginx serves frontend/src/index.html directly.
-    # When running `python run.py`, this route handles it instead.
-    frontend_html = Path(__file__).parent / "frontend" / "src" / "index.html"
+    frontend_src = Path(__file__).parent / "frontend" / "src"
+    frontend_html = frontend_src / "index.html"
+
+    # Serve JS modules at /js — required for ES module imports in index.html.
+    # In production nginx serves the whole frontend/src/ directory directly.
+    app.mount("/js", StaticFiles(directory=str(frontend_src / "js")), name="js")
 
     @app.get("/")
     async def serve_frontend():
-        return FileResponse(str(frontend_html))
+        return FileResponse(
+            str(frontend_html),
+            headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+        )
 
     print(f"Starting Obsidian MCP Chat → http://localhost:{port}")
     uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")

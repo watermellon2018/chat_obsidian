@@ -1,755 +1,377 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Obsidian MCP Чат</title>
+<title>Obsidian MCP Chat</title>
+
+<!-- Inter font -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- DaisyUI 4 -->
+<link href="https://cdn.jsdelivr.net/npm/daisyui@4/dist/full.min.css" rel="stylesheet">
+
+<!-- Tailwind CDN — configure before loading -->
+<script>
+  tailwind = {
+    config: {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            navy:    '#111827',
+            surface: '#1f2937',
+            border:  '#374151',
+            blue:    '#3b82f6',
+            teal:    '#14b8a6',
+            green:   '#10b981',
+            rose:    '#f43f5e',
+            text:    '#cdd6f4',
+            muted:   '#94a3b8',
+          },
+        },
+      },
+    },
+  };
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- marked for Markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<!-- Deep Navy theme -->
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg:       #1e1e2e;
-    --surface:  #2a2a3e;
-    --border:   #3a3a52;
-    --text:     #cdd6f4;
-    --muted:    #7f849c;
-    --accent:   #89b4fa;
-    --user-bg:  #313244;
-    --bot-bg:   #252535;
-    --tool-bg:  #1e3a4c;
-    --tool-txt: #74c7ec;
-    --err-bg:   #3c1f24;
-    --err-txt:  #f38ba8;
-    --src-bg:   #1e2d1e;
-    --src-txt:  #a6e3a1;
-    --radius:   12px;
-    --font:     'Segoe UI', system-ui, sans-serif;
+  [data-theme="navy"] {
+    --color-base-100: #111827;
+    --color-base-200: #1f2937;
+    --color-base-300: #374151;
+    --color-base-content: #cdd6f4;
+    --color-primary: #3b82f6;
+    --color-primary-content: #ffffff;
+    --color-secondary: #14b8a6;
+    --color-secondary-content: #ffffff;
+    --color-accent: #6366f1;
+    --color-accent-content: #ffffff;
+    --color-neutral: #374151;
+    --color-neutral-content: #cdd6f4;
+    --color-info: #14b8a6;
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-error: #f43f5e;
+    font-family: 'Inter', system-ui, sans-serif;
   }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font);
-    height: 100dvh;
-    display: flex;
-    flex-direction: column;
+  /* Markdown prose inside chat bubbles */
+  .chat-bubble h1, .chat-bubble h2, .chat-bubble h3 {
+    margin: .5em 0 .25em; color: #3b82f6; font-weight: 600;
+  }
+  .chat-bubble p    { margin: .25em 0; }
+  .chat-bubble ul, .chat-bubble ol { padding-left: 1.4em; margin: .25em 0; }
+  .chat-bubble code {
+    background: rgba(255,255,255,.08); padding: 1px 5px;
+    border-radius: 4px; font-size: .85em; font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+  .chat-bubble pre {
+    background: rgba(0,0,0,.3); border: 1px solid #374151;
+    border-radius: 8px; padding: 12px 14px; overflow-x: auto; margin: .5em 0;
+  }
+  .chat-bubble pre code { background: none; padding: 0; }
+  .chat-bubble strong  { color: #3b82f6; }
+  .chat-bubble blockquote {
+    border-left: 3px solid #3b82f6; padding-left: 10px;
+    color: #94a3b8; margin: .25em 0;
   }
 
-  /* ── Шапка ── */
-  header {
-    padding: 12px 20px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
-    flex-wrap: wrap;
-  }
-  header h1 { font-size: 1rem; font-weight: 600; color: var(--accent); }
-  header span { font-size: .8rem; color: var(--muted); }
-  .dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: #a6e3a1; flex-shrink: 0;
-  }
-  .dot.offline { background: var(--muted); }
-
-  /* ── Переключатели ── */
-  .toggle-group {
-    margin-left: auto;
-    display: flex;
-    gap: 8px;
-    align-items: center;
+  /* User bubble: primary blue */
+  .bubble-user {
+    background: #3b82f6;
+    color: #ffffff;
   }
 
-  .toggle {
-    display: flex;
-    gap: 4px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 3px;
-  }
-  .toggle-btn {
-    background: none;
-    border: none;
-    border-radius: 6px;
-    color: var(--muted);
-    cursor: pointer;
-    font-size: .82rem;
-    font-weight: 600;
-    padding: 4px 14px;
-    transition: background .15s, color .15s;
-  }
-  .toggle-btn.active {
-    background: var(--surface);
-    color: var(--accent);
+  /* Bot bubble: surface with border */
+  .bubble-bot {
+    background: #1f2937;
+    border: 1px solid #374151;
+    color: #cdd6f4;
   }
 
-  /* Маленький переключатель MCP / RAG */
-  #chat-sub-toggle {
-    font-size: .75rem;
-  }
-  #chat-sub-toggle .toggle-btn {
-    font-size: .75rem;
-    padding: 3px 10px;
+  /* Flashcard shadow */
+  .fc-card-shadow {
+    box-shadow: 0 8px 32px rgba(0,0,0,.45), 0 2px 8px rgba(59,130,246,.08);
   }
 
-  /* ── Область чата ── */
-  #chat {
-    flex: 1;
-    overflow-y: auto;
-    padding: 20px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    scroll-behavior: smooth;
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
-
-  /* ── Сообщения ── */
-  .msg {
-    display: flex;
-    flex-direction: column;
-    max-width: 78%;
-    animation: fadeIn .2s ease;
-  }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } }
-
-  .msg.user  { align-self: flex-end; align-items: flex-end; }
-  .msg.bot   { align-self: flex-start; align-items: flex-start; }
-
-  .bubble {
-    padding: 10px 14px;
-    border-radius: var(--radius);
-    line-height: 1.6;
-    font-size: .92rem;
-    word-break: break-word;
-  }
-  .msg.user .bubble {
-    background: var(--user-bg);
-    border-bottom-right-radius: 3px;
-  }
-  .msg.bot .bubble {
-    background: var(--bot-bg);
-    border: 1px solid var(--border);
-    border-bottom-left-radius: 3px;
-  }
-  .msg.error .bubble {
-    background: var(--err-bg);
-    color: var(--err-txt);
-    border: 1px solid var(--err-txt);
-  }
-
-  /* Markdown внутри пузырей */
-  .bubble h1,.bubble h2,.bubble h3 { margin: .6em 0 .3em; color: var(--accent); }
-  .bubble p  { margin: .3em 0; }
-  .bubble ul,.bubble ol { padding-left: 1.4em; margin: .3em 0; }
-  .bubble code {
-    background: rgba(255,255,255,.07);
-    padding: 1px 5px; border-radius: 4px;
-    font-size: .85em; font-family: monospace;
-  }
-  .bubble pre {
-    background: rgba(255,255,255,.05);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 10px 12px;
-    overflow-x: auto;
-    margin: .5em 0;
-  }
-  .bubble pre code { background: none; padding: 0; }
-  .bubble strong { color: var(--accent); }
-  .bubble blockquote {
-    border-left: 3px solid var(--accent);
-    padding-left: 10px;
-    color: var(--muted);
-    margin: .3em 0;
-  }
-
-  /* ── Источники под ответом ── */
-  .sources {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 6px;
-    padding-left: 2px;
-  }
-  .source-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: .74rem;
-    color: var(--src-txt);
-    background: var(--src-bg);
-    border: 1px solid var(--src-txt);
-    padding: 2px 9px;
-    border-radius: 20px;
-    text-decoration: none;
-    transition: opacity .15s;
-    cursor: pointer;
-  }
-  .source-tag:hover { opacity: .8; }
-
-  /* ── Индикаторы инструментов ── */
-  .tool-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: .78rem;
-    color: var(--tool-txt);
-    background: var(--tool-bg);
-    border: 1px solid var(--tool-txt);
-    padding: 3px 10px;
-    border-radius: 20px;
-    margin-bottom: 4px;
-    animation: fadeIn .15s ease;
-  }
-  .tool-chip .spinner {
-    width: 10px; height: 10px;
-    border: 2px solid transparent;
-    border-top-color: var(--tool-txt);
-    border-radius: 50%;
-    animation: spin .7s linear infinite;
-    flex-shrink: 0;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .tool-chip.done .spinner { display: none; }
-  .tool-chip.done::before { content: '✓'; font-size: .75rem; }
-
-  /* ── Индикатор «думает» ── */
-  .thinking {
-    display: flex; gap: 4px; align-items: center;
-    padding: 10px 14px;
-    background: var(--bot-bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    border-bottom-left-radius: 3px;
-  }
-  .thinking span {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: var(--muted);
-    animation: bounce .9s infinite;
-  }
-  .thinking span:nth-child(2) { animation-delay: .15s; }
-  .thinking span:nth-child(3) { animation-delay: .30s; }
-  @keyframes bounce {
-    0%,60%,100% { transform: translateY(0); }
-    30%          { transform: translateY(-5px); }
-  }
-
-  /* ── Поле ввода ── */
-  #input-row {
-    padding: 12px 16px;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    display: flex;
-    gap: 8px;
-    align-items: flex-end;
-    flex-shrink: 0;
-  }
-  #msg {
-    flex: 1;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    font-family: var(--font);
-    font-size: .92rem;
-    padding: 10px 14px;
-    resize: none;
-    max-height: 140px;
-    outline: none;
-    transition: border-color .2s;
-    overflow-y: auto;
-  }
-  #msg:focus { border-color: var(--accent); }
-  #msg::placeholder { color: var(--muted); }
-
-  #send {
-    background: var(--accent);
-    color: var(--bg);
-    border: none;
-    border-radius: var(--radius);
-    padding: 10px 18px;
-    font-size: .9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: opacity .2s;
-    flex-shrink: 0;
-    height: 40px;
-  }
-  #send:hover  { opacity: .85; }
-  #send:disabled { opacity: .4; cursor: default; }
-
-  /* ── Панель карточек ── */
-  #flashcard-panel {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    padding: 20px 16px;
-    gap: 16px;
-  }
-
-  /* Тема и прогресс */
-  .fc-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-  }
-  .fc-topic {
-    font-size: .82rem;
-    color: var(--accent);
-    background: var(--tool-bg);
-    border: 1px solid var(--tool-txt);
-    padding: 3px 14px;
-    border-radius: 20px;
-    max-width: 90vw;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .fc-progress {
-    font-size: .73rem;
-    color: var(--muted);
-  }
-
-  /* Карточка с 3D-переворотом */
-  .fc-card {
-    perspective: 1000px;
-    width: 620px;
-    max-width: 90vw;
-    height: 270px;
-    cursor: pointer;
-  }
-  .fc-inner {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    transform-style: preserve-3d;
-    transition: transform .45s ease;
-  }
-  .fc-card.flipped .fc-inner { transform: rotateY(180deg); }
-
-  .fc-front, .fc-back {
-    position: absolute;
-    inset: 0;
-    backface-visibility: hidden;
-    border-radius: var(--radius);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 28px 24px;
-    font-size: 1rem;
-    line-height: 1.6;
-    text-align: center;
-  }
-  .fc-front {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    flex-direction: column;
-    gap: 10px;
-  }
-  .fc-front-label {
-    font-size: .72rem;
-    color: var(--muted);
-    letter-spacing: .06em;
-    text-transform: uppercase;
-  }
-  .fc-back {
-    background: var(--tool-bg);
-    border: 1px solid var(--tool-txt);
-    color: var(--text);
-    transform: rotateY(180deg);
-    flex-direction: column;
-    gap: 12px;
-  }
-  .fc-source-link {
-    font-size: .73rem;
-    color: var(--src-txt);
-    background: var(--src-bg);
-    border: 1px solid var(--src-txt);
-    padding: 2px 10px;
-    border-radius: 20px;
-    text-decoration: none;
-    transition: opacity .15s;
-  }
-  .fc-source-link:hover { opacity: .8; }
-
-  .fc-controls {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-  }
-  #fc-next {
-    background: var(--accent);
-    color: var(--bg);
-    border: none;
-    border-radius: var(--radius);
-    padding: 9px 24px;
-    font-size: .9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: opacity .2s;
-  }
-  #fc-next:hover { opacity: .85; }
-  #fc-next:disabled { opacity: .4; cursor: default; }
-  .fc-hint { font-size: .76rem; color: var(--muted); }
+  .msg-enter { animation: fadeIn .2s ease; }
 </style>
-</head>
-<body>
 
-<header>
-  <div class="dot" id="dot"></div>
-  <h1>Obsidian MCP Чат</h1>
-  <span>Ваши заметки — главный источник истины</span>
-  <div class="toggle-group">
-    <!-- Переключатель MCP / RAG (только в режиме чата) -->
-    <div class="toggle" id="chat-sub-toggle">
-      <button class="toggle-btn active" id="btn-mcp" onclick="setChatMode('mcp')" title="Чат через MCP-инструменты">MCP</button>
-      <button class="toggle-btn"        id="btn-rag" onclick="setChatMode('rag')" title="Чат через FAISS-поиск">RAG</button>
+<!-- Alpine ESM entry point — must be type="module" -->
+<script type="module" src="js/app.js"></script>
+</head>
+
+<body data-theme="navy" x-data="appShell"
+      class="bg-base-100 text-base-content flex flex-col overflow-hidden font-sans"
+      style="height:100dvh">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     HEADER
+════════════════════════════════════════════════════════════════ -->
+<header class="shrink-0 flex flex-wrap items-center gap-2 px-5 py-3 bg-base-200 border-b border-base-300">
+
+  <!-- Connection dot -->
+  <div class="w-2 h-2 rounded-full shrink-0 transition-colors duration-300"
+       :class="$store.app.wsConnected ? 'bg-success shadow-[0_0_6px_#10b981]' : 'bg-neutral'"></div>
+
+  <!-- Title -->
+  <h1 class="text-sm font-semibold text-primary tracking-tight" x-text="_t('title')"></h1>
+  <span class="text-xs text-muted" x-text="_t('subtitle')"></span>
+
+  <!-- Right controls -->
+  <div class="ml-auto flex items-center gap-2 flex-wrap">
+
+    <!-- Language toggle -->
+    <div class="join">
+      <button class="join-item btn btn-xs font-medium"
+              :class="$store.app.lang === 'en' ? 'btn-primary' : 'btn-ghost text-muted'"
+              @click="$store.app.setLang('en')">EN</button>
+      <button class="join-item btn btn-xs font-medium"
+              :class="$store.app.lang === 'ru' ? 'btn-primary' : 'btn-ghost text-muted'"
+              @click="$store.app.setLang('ru')">RU</button>
     </div>
-    <!-- Переключатель Чат / Карточки -->
-    <div class="toggle">
-      <button class="toggle-btn active" id="btn-chat"  onclick="setMode('chat')">Чат</button>
-      <button class="toggle-btn"        id="btn-flash" onclick="setMode('flashcards')">Карточки</button>
+
+    <!-- MCP / RAG toggle (chat mode only) -->
+    <div class="join" x-show="$store.app.mode === 'chat'">
+      <button class="join-item btn btn-xs font-medium"
+              :class="$store.app.chatMode === 'mcp' ? 'btn-secondary' : 'btn-ghost text-muted'"
+              @click="$store.app.setChatMode('mcp')">MCP</button>
+      <button class="join-item btn btn-xs font-medium"
+              :class="$store.app.chatMode === 'rag' ? 'btn-secondary' : 'btn-ghost text-muted'"
+              @click="$store.app.setChatMode('rag')">RAG</button>
     </div>
+
+    <!-- Chat / Flashcards mode toggle -->
+    <div class="join">
+      <button class="join-item btn btn-xs font-medium"
+              :class="$store.app.mode === 'chat' ? 'btn-accent' : 'btn-ghost text-muted'"
+              @click="$store.app.setMode('chat')"
+              x-text="_t('modeChat')"></button>
+      <button class="join-item btn btn-xs font-medium"
+              :class="$store.app.mode === 'flashcards' ? 'btn-accent' : 'btn-ghost text-muted'"
+              @click="$store.app.setMode('flashcards')"
+              x-text="_t('modeFlash')"></button>
+    </div>
+
   </div>
 </header>
 
-<div id="chat"></div>
+<!-- ═══════════════════════════════════════════════════════════════
+     CHAT PANEL
+════════════════════════════════════════════════════════════════ -->
+<div x-data="chat"
+     x-show="$store.app.mode === 'chat'"
+     class="flex flex-col flex-1 min-h-0">
 
-<div id="flashcard-panel">
-  <div class="fc-header">
-    <div class="fc-topic" id="fc-topic">Загрузка темы…</div>
-    <div class="fc-progress" id="fc-progress"></div>
+  <!-- Message list -->
+  <div x-ref="messageList"
+       class="flex-1 overflow-y-auto flex flex-col gap-3 px-4 py-5 scroll-smooth">
+
+    <!-- Finalized messages -->
+    <template x-for="msg in messages" :key="msg.id">
+      <div class="msg-enter"
+           :class="msg.role === 'user' ? 'chat chat-end' : 'chat chat-start'">
+
+        <!-- User bubble -->
+        <template x-if="msg.role === 'user'">
+          <div class="chat-bubble bubble-user max-w-[78%] text-sm leading-relaxed"
+               x-text="msg.content"></div>
+        </template>
+
+        <!-- Bot bubble (Markdown) -->
+        <template x-if="msg.role === 'bot'">
+          <div>
+            <div class="chat-bubble bubble-bot max-w-[78%] text-sm leading-relaxed"
+                 x-html="renderMarkdown(msg.content)"></div>
+            <!-- Source badges -->
+            <template x-if="msg.sources && msg.sources.length">
+              <div class="flex flex-wrap gap-1.5 mt-2 pl-1">
+                <template x-for="src in msg.sources" :key="src">
+                  <a :href="obsidianHref(src)"
+                     class="badge badge-outline text-xs cursor-pointer hover:opacity-75 transition-opacity"
+                     style="border-color:#10b981; color:#10b981"
+                     title="Open in Obsidian">
+                    📄 <span x-text="src"></span>
+                  </a>
+                </template>
+              </div>
+            </template>
+          </div>
+        </template>
+
+        <!-- Error bubble -->
+        <template x-if="msg.role === 'error'">
+          <div class="alert max-w-[78%] py-2 px-3 text-sm"
+               style="background:rgba(244,63,94,.12); border:1px solid #f43f5e; color:#f43f5e">
+            ⚠ <span x-text="msg.content"></span>
+          </div>
+        </template>
+
+      </div>
+    </template>
+
+    <!-- In-flight: tool chips + thinking indicator -->
+    <template x-if="pendingMsg">
+      <div class="chat chat-start">
+        <div class="flex flex-col gap-1.5">
+
+          <!-- Tool chips -->
+          <template x-for="(tc, i) in pendingMsg.tools" :key="i">
+            <div class="badge badge-outline gap-1.5 msg-enter text-xs px-2.5 py-2"
+                 style="border-color:#14b8a6; color:#14b8a6"
+                 :class="tc.done ? 'opacity-70' : ''">
+              <span x-show="!tc.done" class="loading loading-spinner loading-xs"></span>
+              <span x-show="tc.done" class="text-xs" style="color:#10b981">✓</span>
+              <span x-text="formatTool(tc.name, tc.args)"></span>
+            </div>
+          </template>
+
+          <!-- Thinking dots -->
+          <div x-show="pendingMsg.showThinking"
+               class="chat-bubble bubble-bot px-4 py-3">
+            <span class="loading loading-dots loading-sm opacity-60"></span>
+          </div>
+
+        </div>
+      </div>
+    </template>
+
+  </div><!-- /message list -->
+
+  <!-- Input row -->
+  <div class="shrink-0 flex gap-2 items-end px-4 py-3 bg-base-200 border-t border-base-300">
+    <textarea
+      x-model="inputText"
+      @keydown.enter="handleEnter($event)"
+      @input="$event.target.style.height='auto'; $event.target.style.height=Math.min($event.target.scrollHeight,140)+'px'"
+      :placeholder="_t('placeholder')"
+      :disabled="busy"
+      rows="1"
+      class="textarea flex-1 resize-none min-h-[40px] max-h-[140px] text-sm leading-relaxed bg-base-100 text-base-content placeholder:text-muted"
+      style="border:1px solid #374151; border-radius:8px; outline:none; transition:border-color .2s"
+      onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#374151'"
+    ></textarea>
+    <button @click="send()"
+            :disabled="busy || !$store.app.wsConnected"
+            class="btn btn-primary shrink-0 h-10 min-h-0 font-medium"
+            x-text="_t('sendBtn')"></button>
   </div>
 
-  <div id="fc-card" class="fc-card" onclick="flipCard()" title="Нажмите, чтобы перевернуть">
-    <div class="fc-inner">
-      <div class="fc-front">
-        <span class="fc-front-label">Вопрос</span>
-        <p id="fc-question">Генерация…</p>
-      </div>
-      <div class="fc-back">
-        <p id="fc-answer"></p>
-        <a id="fc-source-link" class="fc-source-link" href="#" target="_blank" style="display:none"></a>
-      </div>
+</div><!-- /chat panel -->
+
+<!-- ═══════════════════════════════════════════════════════════════
+     FLASHCARDS PANEL
+════════════════════════════════════════════════════════════════ -->
+<div x-data="flashcards"
+     x-show="$store.app.mode === 'flashcards'"
+     @keydown.window="handleKey($event)"
+     class="flex flex-col flex-1 min-h-0 items-center justify-center gap-5 px-4 py-6">
+
+  <!-- Loading skeleton -->
+  <template x-if="loading">
+    <div class="flex flex-col items-center gap-3 w-full max-w-lg">
+      <div class="skeleton h-6 w-48 rounded-full"></div>
+      <div class="skeleton h-64 w-full rounded-xl"></div>
+      <div class="skeleton h-8 w-32 rounded-lg"></div>
     </div>
-  </div>
+  </template>
 
-  <div class="fc-controls">
-    <button id="fc-next" onclick="nextCard()">Следующая карточка →</button>
-    <p class="fc-hint">Нажмите на карточку или Space — перевернуть · → или N — следующая</p>
-  </div>
-</div>
+  <!-- Error state -->
+  <template x-if="error && !loading">
+    <div class="flex items-center gap-3 max-w-lg w-full rounded-xl px-4 py-3 text-sm"
+         style="background:rgba(244,63,94,.1); border:1px solid #f43f5e; color:#f43f5e">
+      ⚠ <span x-text="error" class="flex-1"></span>
+      <button class="btn btn-xs btn-ghost" @click="fetchBatch()" x-text="_t('fcNext')"></button>
+    </div>
+  </template>
 
-<div id="input-row">
-  <textarea id="msg" rows="1"
-    placeholder="Спросите о ваших заметках… (Enter — отправить, Shift+Enter — перенос строки)">
-  </textarea>
-  <button id="send">Отправить</button>
-</div>
+  <!-- Card + controls -->
+  <template x-if="currentCard && !loading">
+    <div class="flex flex-col items-center gap-4 w-full">
 
-<script>
-  marked.setOptions({ breaks: true, gfm: true });
+      <!-- Topic badge + progress -->
+      <div class="flex flex-col items-center gap-1">
+        <div class="badge badge-outline text-xs px-3 py-2 max-w-[90vw] truncate font-medium"
+             style="border-color:#14b8a6; color:#14b8a6"
+             x-text="topicLabel"></div>
+        <div class="text-xs" style="color:#94a3b8" x-text="progress"></div>
+      </div>
 
-  const chat    = document.getElementById('chat');
-  const msgEl   = document.getElementById('msg');
-  const sendBtn = document.getElementById('send');
-  const dot     = document.getElementById('dot');
+      <!-- 3D flip card -->
+      <div class="[perspective:1000px] w-[620px] max-w-[90vw] h-64 cursor-pointer fc-card-shadow rounded-xl"
+           @click="flipCard()">
+        <div class="relative w-full h-full [transform-style:preserve-3d] transition-transform duration-[450ms]"
+             :class="cardFlipped ? '[transform:rotateY(180deg)]' : ''">
 
-  let ws = null;
-  let toolsEl = null;
-  let thinking = null;
-  let busy = false;
+          <!-- Front face -->
+          <div class="absolute inset-0 [backface-visibility:hidden] rounded-xl
+                      flex flex-col items-center justify-center gap-3 p-8 text-center"
+               style="background:#1f2937; border:1px solid #374151">
+            <span class="text-[10px] uppercase tracking-widest font-semibold"
+                  style="color:#94a3b8"
+                  x-text="_t('fcLabel')"></span>
+            <p class="text-base leading-relaxed" style="color:#cdd6f4"
+               x-text="currentCard.question"></p>
+          </div>
 
-  // ── Имя хранилища Obsidian (для ссылок obsidian://) ───────────────────
-  let vaultName = '';
-  fetch('/info').then(r => r.json()).then(d => { vaultName = d.vault_name || ''; }).catch(() => {});
+          <!-- Back face -->
+          <div class="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-xl
+                      flex flex-col items-center justify-center gap-3 p-8 text-center"
+               style="background:#162032; border:1px solid rgba(20,184,166,.35)">
+            <p class="text-base leading-relaxed" style="color:#cdd6f4"
+               x-text="currentCard.answer"></p>
+            <template x-if="currentCard.source">
+              <a :href="obsidianHref(currentCard.source)"
+                 class="badge badge-outline text-xs hover:opacity-75 transition-opacity"
+                 style="border-color:#10b981; color:#10b981"
+                 @click.stop title="Open in Obsidian">
+                📄 <span x-text="currentCard.source"></span>
+              </a>
+            </template>
+          </div>
 
-  // ── Режим (chat / flashcards) и подрежим чата (mcp / rag) ────────────
-  let mode     = 'chat';
-  let chatMode = 'mcp';  // 'mcp' | 'rag'
+        </div>
+      </div><!-- /flip card -->
 
-  function setMode(m) {
-    mode = m;
-    chat.style.display              = m === 'chat'       ? 'flex'   : 'none';
-    document.getElementById('input-row').style.display   = m === 'chat'       ? 'flex'   : 'none';
-    document.getElementById('flashcard-panel').style.display = m === 'flashcards' ? 'flex' : 'none';
-    document.getElementById('chat-sub-toggle').style.display = m === 'chat'    ? 'flex'   : 'none';
-    document.getElementById('btn-chat').classList.toggle('active', m === 'chat');
-    document.getElementById('btn-flash').classList.toggle('active', m === 'flashcards');
-    if (m === 'flashcards' && currentBatch.length === 0) fetchBatch();
-  }
+      <!-- Navigation -->
+      <div class="flex flex-col items-center gap-2">
+        <div class="flex gap-2">
+          <button class="btn btn-sm font-medium"
+                  style="background:#1f2937; border:1px solid #374151; color:#cdd6f4"
+                  :disabled="isPrevDisabled"
+                  @click="prevCard()"
+                  x-text="_t('fcPrev')"></button>
+          <button class="btn btn-sm btn-primary font-medium"
+                  :disabled="isNextDisabled"
+                  @click="nextCard()"
+                  x-text="_t('fcNext')"></button>
+        </div>
+        <p class="text-xs" style="color:#94a3b8" x-text="_t('fcHint')"></p>
+      </div>
 
-  function setChatMode(m) {
-    chatMode = m;
-    document.getElementById('btn-mcp').classList.toggle('active', m === 'mcp');
-    document.getElementById('btn-rag').classList.toggle('active', m === 'rag');
-    // Переподключиться к другому WebSocket-эндпоинту
-    if (ws) { ws.onclose = null; ws.close(); ws = null; }
-    connect();
-  }
+    </div>
+  </template>
 
-  // ── Карточки: батчевый цикл ───────────────────────────────────────────
-  let currentBatch  = [];   // [{question, answer, source}, ...]
-  let batchIndex    = 0;
-  let cardFlipped   = false;
-  let seenTopics    = [];   // темы уже показанных батчей
+  <!-- Empty state -->
+  <template x-if="!currentCard && !loading && !error">
+    <button class="btn btn-primary font-medium" @click="fetchBatch()" x-text="_t('fcNext')"></button>
+  </template>
 
-  async function fetchBatch() {
-    document.getElementById('fc-next').disabled = true;
-    document.getElementById('fc-question').textContent = 'Генерация темы…';
-    document.getElementById('fc-answer').textContent   = '';
-    document.getElementById('fc-topic').textContent    = 'Загрузка…';
-    document.getElementById('fc-progress').textContent = '';
-    hideSourceLink();
+</div><!-- /flashcards panel -->
 
-    try {
-      const exclude = seenTopics.join(',');
-      const res = await fetch(`/flashcard/batch?exclude_topics=${encodeURIComponent(exclude)}`);
-      if (!res.ok) throw new Error(`Ошибка сервера ${res.status}`);
-      const data = await res.json();
-
-      currentBatch = data.cards || [];
-      batchIndex   = 0;
-
-      if (currentBatch.length === 0) throw new Error('Сервер вернул пустой батч');
-
-      seenTopics.push(data.topic);
-      document.getElementById('fc-topic').textContent = `🎯 ${data.topic}`;
-      showCard(0);
-    } catch (err) {
-      document.getElementById('fc-question').textContent = `Ошибка: ${err.message}`;
-      document.getElementById('fc-topic').textContent = '—';
-    } finally {
-      document.getElementById('fc-next').disabled = false;
-    }
-  }
-
-  function showCard(index) {
-    cardFlipped = false;
-    document.getElementById('fc-card').classList.remove('flipped');
-
-    const card = currentBatch[index];
-    document.getElementById('fc-question').textContent = card.question || '(нет вопроса)';
-    document.getElementById('fc-answer').textContent   = card.answer   || '(нет ответа)';
-    document.getElementById('fc-progress').textContent =
-      `${index + 1} / ${currentBatch.length}`;
-
-    const src = card.source || '';
-    if (src && vaultName) {
-      showSourceLink(`obsidian://open?vault=${encodeURIComponent(vaultName)}&file=${encodeURIComponent(src)}`, `📄 ${src}`);
-    } else if (src) {
-      showSourceLink('#', `📄 ${src}`);
-    } else {
-      hideSourceLink();
-    }
-  }
-
-  function showSourceLink(href, label) {
-    const el = document.getElementById('fc-source-link');
-    el.href        = href;
-    el.textContent = label;
-    el.style.display = 'inline-flex';
-  }
-  function hideSourceLink() {
-    document.getElementById('fc-source-link').style.display = 'none';
-  }
-
-  function nextCard() {
-    if (currentBatch.length === 0) { fetchBatch(); return; }
-    batchIndex++;
-    if (batchIndex < currentBatch.length) {
-      showCard(batchIndex);
-    } else {
-      // Батч исчерпан — загружаем следующую тему
-      currentBatch = [];
-      batchIndex   = 0;
-      fetchBatch();
-    }
-  }
-
-  function flipCard() {
-    cardFlipped = !cardFlipped;
-    document.getElementById('fc-card').classList.toggle('flipped', cardFlipped);
-  }
-
-  document.addEventListener('keydown', (e) => {
-    if (mode === 'flashcards') {
-      if (e.key === ' ')                            { e.preventDefault(); flipCard(); }
-      if (e.key === 'ArrowRight' || e.key === 'n')  { e.preventDefault(); nextCard(); }
-    }
-  });
-
-  // ── WebSocket ──────────────────────────────────────────────────────────
-  function wsEndpoint() {
-    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    return chatMode === 'rag'
-      ? `${proto}://${location.host}/ask`
-      : `${proto}://${location.host}/ws`;
-  }
-
-  function connect() {
-    ws = new WebSocket(wsEndpoint());
-
-    ws.onopen  = () => dot.classList.remove('offline');
-    ws.onclose = () => {
-      dot.classList.add('offline');
-      setBusy(false);
-      setTimeout(connect, 2000);
-    };
-
-    ws.onmessage = (e) => {
-      const ev = JSON.parse(e.data);
-
-      if (ev.type === 'tool_start') {
-        // Только в MCP-режиме
-        removeThinking();
-        if (!toolsEl) {
-          toolsEl = document.createElement('div');
-          toolsEl.className = 'msg bot';
-          chat.appendChild(toolsEl);
-        }
-        const chip = makeToolChip(ev.tool, ev.args);
-        chip.dataset.tool = ev.tool;
-        toolsEl.appendChild(chip);
-        scrollBottom();
-
-      } else if (ev.type === 'tool_end') {
-        if (toolsEl) {
-          const chip = toolsEl.querySelector(`[data-tool="${ev.tool}"]:not(.done)`);
-          if (chip) chip.classList.add('done');
-        }
-
-      } else if (ev.type === 'done') {
-        removeThinking();
-        toolsEl = null;
-        appendBot(ev.content, ev.sources || []);
-        setBusy(false);
-
-      } else if (ev.type === 'error') {
-        removeThinking();
-        toolsEl = null;
-        appendError(ev.content);
-        setBusy(false);
-      }
-    };
-  }
-
-  // ── Вспомогательные функции ────────────────────────────────────────────
-  function appendUser(text) {
-    const el = document.createElement('div');
-    el.className = 'msg user';
-    el.innerHTML = `<div class="bubble">${escHtml(text)}</div>`;
-    chat.appendChild(el);
-    scrollBottom();
-  }
-
-  function appendBot(markdown, sources) {
-    const el = document.createElement('div');
-    el.className = 'msg bot';
-
-    let html = `<div class="bubble">${marked.parse(markdown)}</div>`;
-
-    // Источники: показываем только если сервер вернул их явно (RAG-режим)
-    if (sources && sources.length > 0) {
-      const tagsHtml = sources.map(src => {
-        const href = (vaultName && src)
-          ? `obsidian://open?vault=${encodeURIComponent(vaultName)}&file=${encodeURIComponent(src)}`
-          : '#';
-        return `<a class="source-tag" href="${escHtml(href)}" title="Открыть в Obsidian">📄 ${escHtml(src)}</a>`;
-      }).join('');
-      html += `<div class="sources">${tagsHtml}</div>`;
-    }
-
-    el.innerHTML = html;
-    chat.appendChild(el);
-    scrollBottom();
-  }
-
-  function appendError(text) {
-    const el = document.createElement('div');
-    el.className = 'msg error';
-    el.innerHTML = `<div class="bubble">⚠ ${escHtml(text)}</div>`;
-    chat.appendChild(el);
-    scrollBottom();
-  }
-
-  function showThinking() {
-    thinking = document.createElement('div');
-    thinking.className = 'msg bot';
-    thinking.innerHTML = '<div class="thinking"><span></span><span></span><span></span></div>';
-    chat.appendChild(thinking);
-    scrollBottom();
-  }
-
-  function removeThinking() {
-    if (thinking) { thinking.remove(); thinking = null; }
-  }
-
-  function makeToolChip(tool, args) {
-    const chip = document.createElement('div');
-    chip.className = 'tool-chip';
-    chip.innerHTML = `<span class="spinner"></span>${escHtml(formatTool(tool, args))}`;
-    return chip;
-  }
-
-  function formatTool(tool, args) {
-    const map = {
-      search_notes:  a => `🔍 Поиск: ${a.query || ''}`,
-      read_note:     a => `📄 Читаю: ${a.path || ''}`,
-      list_notes:    _  => '📋 Список заметок',
-      search_by_tag: a => `🏷 Тег: ${a.tag || ''}`,
-      get_backlinks: a => `🔗 Ссылки: ${a.note_name || ''}`,
-    };
-    return (map[tool] || (() => `⚙ ${tool}`))(args || {});
-  }
-
-  function escHtml(s) {
-    return String(s)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  function scrollBottom() {
-    requestAnimationFrame(() => { chat.scrollTop = chat.scrollHeight; });
-  }
-
-  function setBusy(val) {
-    busy = val;
-    sendBtn.disabled = val;
-    msgEl.disabled   = val;
-  }
-
-  function send() {
-    const text = msgEl.value.trim();
-    if (!text || busy || !ws || ws.readyState !== WebSocket.OPEN) return;
-    appendUser(text);
-    showThinking();
-    setBusy(true);
-    ws.send(JSON.stringify({ message: text }));
-    msgEl.value = '';
-    msgEl.style.height = 'auto';
-  }
-
-  sendBtn.addEventListener('click', send);
-  msgEl.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
-  });
-  msgEl.addEventListener('input', () => {
-    msgEl.style.height = 'auto';
-    msgEl.style.height = Math.min(msgEl.scrollHeight, 140) + 'px';
-  });
-
-  connect();
-</script>
 </body>
 </html>
