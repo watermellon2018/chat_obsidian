@@ -6,7 +6,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: backend/Dockerfile
     restart: unless-stopped
     environment:
       MODEL_BACKEND: ${MODEL_BACKEND:-gemini}
@@ -17,6 +17,7 @@ services:
       VAULT_PATH: /app/vault
       SAVE_INDEX_PATH: /app/vector_db
       PORT: 8000
+      PYTHONPATH: /app
     volumes:
       # Mount your Obsidian vault as read-only
       - /home/matafix/obsidian_knowlage/md_store:/app/vault:ro
