@@ -43,9 +43,11 @@
 <!-- marked for Markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-<!-- Deep Navy theme -->
+<!-- Override DaisyUI built-in 'dark' theme with Deep Navy palette.
+     Our <style> block loads AFTER the DaisyUI CDN link, so these
+     declarations win the cascade without needing !important. -->
 <style>
-  [data-theme="navy"] {
+  [data-theme="dark"] {
     --color-base-100: #111827;
     --color-base-200: #1f2937;
     --color-base-300: #374151;
@@ -115,7 +117,7 @@
 <script type="module" src="js/app.js"></script>
 </head>
 
-<body data-theme="navy" x-data="appShell"
+<body data-theme="dark" x-data="appShell"
       class="bg-base-100 text-base-content flex flex-col overflow-hidden font-sans"
       style="height:100dvh">
 
