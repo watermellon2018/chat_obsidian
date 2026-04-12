@@ -1,0 +1,37 @@
+name: Deploy Obsidian Chat
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    # Указываем, что задача должна выполняться именно на твоем сервере
+    runs-on: self-hosted
+
+    steps:
+      # 1. Загружаем свежий код из гитхаба в папку раннера
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Создаем/обновляем .env файл из секретов GitHub
+      # Это важно, так как .env не хранится в git
+      - name: Create .env file
+        run: |
+          echo "MODEL_BACKEND=gemini" > .env
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
+          echo "VAULT_PATH=/home/matafix/obsidian_vault" >> .env
+          echo "SAVE_INDEX_PATH=/home/matafix/obsidian_knowlage/faiss" >> .env
+          echo "FRONTEND_PORT=8005" >> .env
+
+      # 3. Пересобираем и запускаем контейнеры
+      # Флаг --build заставит Docker пересобрать образы, если код изменился
+      - name: Docker Compose Deploy
+        run: |
+          docker-compose down
+          docker-compose up -d --build
+
+      # 4. Опционально: очистка старых образов, чтобы не забивать место
+      - name: Cleanup old images
+        run: docker image prune -f
