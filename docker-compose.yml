@@ -41,7 +41,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - "80:80"   # exposed to the host
+      - "${FRONTEND_PORT:-8005}:80"   # exposed to the host
     depends_on:
       backend:
         condition: service_healthy
