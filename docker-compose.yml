@@ -14,11 +14,13 @@ services:
       OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:7b-instruct-q4_K_M}
       # When using Ollama, point to the host machine or a dedicated container
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      VAULT_PATH: /vault
+      VAULT_PATH: /app/vault
       PORT: 8000
     volumes:
       # Mount your Obsidian vault as read-only
-      - ${VAULT_PATH:-./vault}:/vault:ro
+      - /home/matafix/obsidian_knowlage/md_store:/app/vault:ro
+      # FAISS
+      - /home/matafix/obsidian_knowlage/faiss:/app/vector_db
     expose:
       - "8000"          # internal only — frontend nginx proxies to it
     healthcheck:
