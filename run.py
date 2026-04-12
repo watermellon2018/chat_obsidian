@@ -98,7 +98,10 @@ def run_web(model, config: Config, port: int) -> None:
 
     @app.get("/")
     async def serve_frontend():
-        return FileResponse(str(frontend_html))
+        return FileResponse(
+            str(frontend_html),
+            headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+        )
 
     print(f"Starting Obsidian MCP Chat → http://localhost:{port}")
     uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
