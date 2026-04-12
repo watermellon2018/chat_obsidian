@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(pip install:*)",
-      "Bash(python -c \":*)",
-      "Bash(python -m pip install rank-bm25 mcp google-genai ollama --user)"
-    ]
-  }
-}
