@@ -43,6 +43,11 @@
 <!-- marked for Markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
+<!-- KaTeX (math) — load before ESM app so window.katex / renderMathInElement exist -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+
 <!-- Override DaisyUI built-in 'dark' theme with Deep Navy palette.
      Our <style> block loads AFTER the DaisyUI CDN link, so these
      declarations win the cascade without needing !important. -->
@@ -86,6 +91,49 @@
   .chat-bubble blockquote {
     border-left: 3px solid #3b82f6; padding-left: 10px;
     color: #94a3b8; margin: .25em 0;
+  }
+
+  /* KaTeX: avoid wide display math breaking layout */
+  .markdown-math .katex-display,
+  .chat-bubble .katex-display {
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-width: 100%;
+    padding: 0.35em 0;
+    -webkit-overflow-scrolling: touch;
+  }
+  .markdown-math .katex-display > .katex,
+  .chat-bubble .katex-display > .katex {
+    max-width: none;
+  }
+
+  /* Flashcard faces: same markdown rules as chat, no bubble chrome */
+  .fc-markdown {
+    width: 100%;
+    max-width: 100%;
+    text-align: left;
+  }
+  .fc-markdown h1, .fc-markdown h2, .fc-markdown h3 {
+    margin: .5em 0 .25em; color: #3b82f6; font-weight: 600;
+  }
+  .fc-markdown p { margin: .25em 0; }
+  .fc-markdown ul, .fc-markdown ol { padding-left: 1.4em; margin: .25em 0; }
+  .fc-markdown code {
+    background: rgba(255,255,255,.08); padding: 1px 5px;
+    border-radius: 4px; font-size: .85em; font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+  .fc-markdown pre {
+    background: rgba(0,0,0,.3); border: 1px solid #374151;
+    border-radius: 8px; padding: 12px 14px; overflow-x: auto; margin: .5em 0;
+  }
+  .fc-markdown pre code { background: none; padding: 0; }
+  .fc-markdown strong { color: #3b82f6; }
+  .fc-markdown .katex-display {
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-width: 100%;
+    padding: 0.35em 0;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* User bubble: primary blue */
@@ -197,7 +245,7 @@
         <!-- Bot bubble (Markdown) -->
         <template x-if="msg.role === 'bot'">
           <div>
-            <div class="chat-bubble bubble-bot max-w-[78%] text-sm leading-relaxed"
+            <div class="chat-bubble bubble-bot markdown-math max-w-[78%] text-sm leading-relaxed"
                  x-html="renderMarkdown(msg.content)"></div>
             <!-- Source badges -->
             <template x-if="msg.sources && msg.sources.length">
@@ -326,16 +374,18 @@
             <span class="text-[10px] uppercase tracking-widest font-semibold"
                   style="color:#94a3b8"
                   x-text="_t('fcLabel')"></span>
-            <p class="text-base leading-relaxed" style="color:#cdd6f4"
-               x-text="currentCard.question"></p>
+            <div class="fc-markdown markdown-math text-base leading-relaxed"
+                 style="color:#cdd6f4"
+                 x-html="renderCardMarkdown('question')"></div>
           </div>
 
           <!-- Back face -->
           <div class="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-xl
                       flex flex-col items-center justify-center gap-3 p-8 text-center"
                style="background:#162032; border:1px solid rgba(20,184,166,.35)">
-            <p class="text-base leading-relaxed" style="color:#cdd6f4"
-               x-text="currentCard.answer"></p>
+            <div class="fc-markdown markdown-math text-base leading-relaxed"
+                 style="color:#cdd6f4"
+                 x-html="renderCardMarkdown('answer')"></div>
             <template x-if="currentCard.source">
               <a :href="obsidianHref(currentCard.source)"
                  class="badge badge-outline text-xs hover:opacity-75 transition-opacity"

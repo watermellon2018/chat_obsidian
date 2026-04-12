@@ -1,6 +1,7 @@
 // flashcards.js — Alpine.data('flashcards') component factory
 
 import { t } from './i18n.js';
+import { renderMarkdownToHtml } from './render.js';
 
 /**
  * flashcardsComponent — manages batch fetching, card navigation, and flip.
@@ -106,6 +107,14 @@ export function flashcardsComponent() {
       return vault
         ? `obsidian://open?vault=${encodeURIComponent(vault)}&file=${encodeURIComponent(src)}`
         : '#';
+    },
+
+    /** Markdown + KaTeX for card face (Alpine x-html). */
+    renderCardMarkdown(field) {
+      const c = this.currentCard;
+      if (!c) return '';
+      const raw = field === 'question' ? c.question : c.answer;
+      return renderMarkdownToHtml(raw || '');
     },
 
     // ── Fetch ──────────────────────────────────────────────────────────────

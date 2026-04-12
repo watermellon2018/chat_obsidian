@@ -2,6 +2,7 @@
 
 import { ChatWS } from './ws.js';
 import { t, i18n } from './i18n.js';
+import { renderMarkdownToHtml } from './render.js';
 
 /**
  * chatComponent — wraps the message list AND the input row.
@@ -131,7 +132,7 @@ export function chatComponent() {
     },
 
     renderMarkdown(text) {
-      return marked.parse(text || '');
+      return renderMarkdownToHtml(text);
     },
 
     _scrollBottom() {
