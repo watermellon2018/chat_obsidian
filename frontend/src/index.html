@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Obsidian MCP Chat</title>
 
+<!-- Inter font -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
 <!-- DaisyUI 4 -->
 <link href="https://cdn.jsdelivr.net/npm/daisyui@4/dist/full.min.css" rel="stylesheet">
 
@@ -14,19 +19,19 @@
     config: {
       theme: {
         extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
           colors: {
-            'ctp-base':    '#1e1e2e',
-            'ctp-mantle':  '#181825',
-            'ctp-surface': '#313244',
-            'ctp-overlay': '#45475a',
-            'ctp-muted':   '#7f849c',
-            'ctp-text':    '#cdd6f4',
-            'ctp-blue':    '#89b4fa',
-            'ctp-sky':     '#74c7ec',
-            'ctp-mauve':   '#cba6f7',
-            'ctp-green':   '#a6e3a1',
-            'ctp-red':     '#f38ba8',
-            'ctp-yellow':  '#f9e2af',
+            navy:    '#111827',
+            surface: '#1f2937',
+            border:  '#374151',
+            blue:    '#3b82f6',
+            teal:    '#14b8a6',
+            green:   '#10b981',
+            rose:    '#f43f5e',
+            text:    '#cdd6f4',
+            muted:   '#94a3b8',
           },
         },
       },
@@ -38,50 +43,69 @@
 <!-- marked for Markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-<!-- Catppuccin Mocha DaisyUI theme -->
+<!-- Deep Navy theme -->
 <style>
-  [data-theme="mocha"] {
-    --color-base-100: #1e1e2e;
-    --color-base-200: #181825;
-    --color-base-300: #313244;
+  [data-theme="navy"] {
+    --color-base-100: #111827;
+    --color-base-200: #1f2937;
+    --color-base-300: #374151;
     --color-base-content: #cdd6f4;
-    --color-primary: #89b4fa;
-    --color-primary-content: #1e1e2e;
-    --color-secondary: #74c7ec;
-    --color-secondary-content: #1e1e2e;
-    --color-accent: #cba6f7;
-    --color-accent-content: #1e1e2e;
-    --color-neutral: #45475a;
+    --color-primary: #3b82f6;
+    --color-primary-content: #ffffff;
+    --color-secondary: #14b8a6;
+    --color-secondary-content: #ffffff;
+    --color-accent: #6366f1;
+    --color-accent-content: #ffffff;
+    --color-neutral: #374151;
     --color-neutral-content: #cdd6f4;
-    --color-info: #74c7ec;
-    --color-success: #a6e3a1;
-    --color-warning: #f9e2af;
-    --color-error: #f38ba8;
+    --color-info: #14b8a6;
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-error: #f43f5e;
+    font-family: 'Inter', system-ui, sans-serif;
   }
 
   /* Markdown prose inside chat bubbles */
   .chat-bubble h1, .chat-bubble h2, .chat-bubble h3 {
-    margin: .5em 0 .25em; color: #89b4fa; font-weight: 600;
+    margin: .5em 0 .25em; color: #3b82f6; font-weight: 600;
   }
   .chat-bubble p    { margin: .25em 0; }
   .chat-bubble ul, .chat-bubble ol { padding-left: 1.4em; margin: .25em 0; }
   .chat-bubble code {
     background: rgba(255,255,255,.08); padding: 1px 5px;
-    border-radius: 4px; font-size: .85em; font-family: monospace;
+    border-radius: 4px; font-size: .85em; font-family: 'JetBrains Mono', 'Fira Code', monospace;
   }
   .chat-bubble pre {
-    background: rgba(255,255,255,.05); border: 1px solid #45475a;
-    border-radius: 6px; padding: 10px 12px; overflow-x: auto; margin: .4em 0;
+    background: rgba(0,0,0,.3); border: 1px solid #374151;
+    border-radius: 8px; padding: 12px 14px; overflow-x: auto; margin: .5em 0;
   }
   .chat-bubble pre code { background: none; padding: 0; }
-  .chat-bubble strong  { color: #89b4fa; }
+  .chat-bubble strong  { color: #3b82f6; }
   .chat-bubble blockquote {
-    border-left: 3px solid #89b4fa; padding-left: 10px;
-    color: #7f849c; margin: .25em 0;
+    border-left: 3px solid #3b82f6; padding-left: 10px;
+    color: #94a3b8; margin: .25em 0;
+  }
+
+  /* User bubble: primary blue */
+  .bubble-user {
+    background: #3b82f6;
+    color: #ffffff;
+  }
+
+  /* Bot bubble: surface with border */
+  .bubble-bot {
+    background: #1f2937;
+    border: 1px solid #374151;
+    color: #cdd6f4;
+  }
+
+  /* Flashcard shadow */
+  .fc-card-shadow {
+    box-shadow: 0 8px 32px rgba(0,0,0,.45), 0 2px 8px rgba(59,130,246,.08);
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(4px); }
+    from { opacity: 0; transform: translateY(5px); }
     to   { opacity: 1; transform: translateY(0); }
   }
   .msg-enter { animation: fadeIn .2s ease; }
@@ -91,7 +115,9 @@
 <script type="module" src="js/app.js"></script>
 </head>
 
-<body data-theme="mocha" x-data="appShell" class="bg-base-100 text-base-content flex flex-col overflow-hidden" style="height:100dvh">
+<body data-theme="navy" x-data="appShell"
+      class="bg-base-100 text-base-content flex flex-col overflow-hidden font-sans"
+      style="height:100dvh">
 
 <!-- ═══════════════════════════════════════════════════════════════
      HEADER
@@ -99,44 +125,44 @@
 <header class="shrink-0 flex flex-wrap items-center gap-2 px-5 py-3 bg-base-200 border-b border-base-300">
 
   <!-- Connection dot -->
-  <div class="w-2 h-2 rounded-full shrink-0 transition-colors"
-       :class="$store.app.wsConnected ? 'bg-success' : 'bg-neutral'"></div>
+  <div class="w-2 h-2 rounded-full shrink-0 transition-colors duration-300"
+       :class="$store.app.wsConnected ? 'bg-success shadow-[0_0_6px_#10b981]' : 'bg-neutral'"></div>
 
   <!-- Title -->
-  <h1 class="text-sm font-semibold text-primary" x-text="_t('title')"></h1>
-  <span class="text-xs text-base-content/50" x-text="_t('subtitle')"></span>
+  <h1 class="text-sm font-semibold text-primary tracking-tight" x-text="_t('title')"></h1>
+  <span class="text-xs text-muted" x-text="_t('subtitle')"></span>
 
   <!-- Right controls -->
   <div class="ml-auto flex items-center gap-2 flex-wrap">
 
     <!-- Language toggle -->
     <div class="join">
-      <button class="join-item btn btn-xs"
-              :class="$store.app.lang === 'en' ? 'btn-primary' : 'btn-ghost'"
+      <button class="join-item btn btn-xs font-medium"
+              :class="$store.app.lang === 'en' ? 'btn-primary' : 'btn-ghost text-muted'"
               @click="$store.app.setLang('en')">EN</button>
-      <button class="join-item btn btn-xs"
-              :class="$store.app.lang === 'ru' ? 'btn-primary' : 'btn-ghost'"
+      <button class="join-item btn btn-xs font-medium"
+              :class="$store.app.lang === 'ru' ? 'btn-primary' : 'btn-ghost text-muted'"
               @click="$store.app.setLang('ru')">RU</button>
     </div>
 
     <!-- MCP / RAG toggle (chat mode only) -->
     <div class="join" x-show="$store.app.mode === 'chat'">
-      <button class="join-item btn btn-xs"
-              :class="$store.app.chatMode === 'mcp' ? 'btn-secondary' : 'btn-ghost'"
+      <button class="join-item btn btn-xs font-medium"
+              :class="$store.app.chatMode === 'mcp' ? 'btn-secondary' : 'btn-ghost text-muted'"
               @click="$store.app.setChatMode('mcp')">MCP</button>
-      <button class="join-item btn btn-xs"
-              :class="$store.app.chatMode === 'rag' ? 'btn-secondary' : 'btn-ghost'"
+      <button class="join-item btn btn-xs font-medium"
+              :class="$store.app.chatMode === 'rag' ? 'btn-secondary' : 'btn-ghost text-muted'"
               @click="$store.app.setChatMode('rag')">RAG</button>
     </div>
 
     <!-- Chat / Flashcards mode toggle -->
     <div class="join">
-      <button class="join-item btn btn-xs"
-              :class="$store.app.mode === 'chat' ? 'btn-accent' : 'btn-ghost'"
+      <button class="join-item btn btn-xs font-medium"
+              :class="$store.app.mode === 'chat' ? 'btn-accent' : 'btn-ghost text-muted'"
               @click="$store.app.setMode('chat')"
               x-text="_t('modeChat')"></button>
-      <button class="join-item btn btn-xs"
-              :class="$store.app.mode === 'flashcards' ? 'btn-accent' : 'btn-ghost'"
+      <button class="join-item btn btn-xs font-medium"
+              :class="$store.app.mode === 'flashcards' ? 'btn-accent' : 'btn-ghost text-muted'"
               @click="$store.app.setMode('flashcards')"
               x-text="_t('modeFlash')"></button>
     </div>
@@ -146,8 +172,6 @@
 
 <!-- ═══════════════════════════════════════════════════════════════
      CHAT PANEL
-     x-show (not x-if) keeps the component alive during mode switches
-     so the WebSocket stays connected.
 ════════════════════════════════════════════════════════════════ -->
 <div x-data="chat"
      x-show="$store.app.mode === 'chat'"
@@ -164,21 +188,22 @@
 
         <!-- User bubble -->
         <template x-if="msg.role === 'user'">
-          <div class="chat-bubble bg-base-300 text-base-content max-w-[78%]"
+          <div class="chat-bubble bubble-user max-w-[78%] text-sm leading-relaxed"
                x-text="msg.content"></div>
         </template>
 
         <!-- Bot bubble (Markdown) -->
         <template x-if="msg.role === 'bot'">
           <div>
-            <div class="chat-bubble bg-base-200 border border-base-300 text-base-content max-w-[78%]"
+            <div class="chat-bubble bubble-bot max-w-[78%] text-sm leading-relaxed"
                  x-html="renderMarkdown(msg.content)"></div>
             <!-- Source badges -->
             <template x-if="msg.sources && msg.sources.length">
-              <div class="flex flex-wrap gap-1.5 mt-1.5 pl-1">
+              <div class="flex flex-wrap gap-1.5 mt-2 pl-1">
                 <template x-for="src in msg.sources" :key="src">
                   <a :href="obsidianHref(src)"
-                     class="badge badge-success badge-outline text-xs cursor-pointer hover:opacity-80"
+                     class="badge badge-outline text-xs cursor-pointer hover:opacity-75 transition-opacity"
+                     style="border-color:#10b981; color:#10b981"
                      title="Open in Obsidian">
                     📄 <span x-text="src"></span>
                   </a>
@@ -190,7 +215,8 @@
 
         <!-- Error bubble -->
         <template x-if="msg.role === 'error'">
-          <div class="alert alert-error max-w-[78%] py-2 px-3 text-sm">
+          <div class="alert max-w-[78%] py-2 px-3 text-sm"
+               style="background:rgba(244,63,94,.12); border:1px solid #f43f5e; color:#f43f5e">
             ⚠ <span x-text="msg.content"></span>
           </div>
         </template>
@@ -201,22 +227,23 @@
     <!-- In-flight: tool chips + thinking indicator -->
     <template x-if="pendingMsg">
       <div class="chat chat-start">
-        <div class="flex flex-col gap-1">
+        <div class="flex flex-col gap-1.5">
 
           <!-- Tool chips -->
           <template x-for="(tc, i) in pendingMsg.tools" :key="i">
-            <div class="badge badge-outline text-info border-info gap-1.5 msg-enter"
-                 :class="tc.done ? '' : 'opacity-90'">
+            <div class="badge badge-outline gap-1.5 msg-enter text-xs px-2.5 py-2"
+                 style="border-color:#14b8a6; color:#14b8a6"
+                 :class="tc.done ? 'opacity-70' : ''">
               <span x-show="!tc.done" class="loading loading-spinner loading-xs"></span>
-              <span x-show="tc.done"  class="text-success text-xs">✓</span>
+              <span x-show="tc.done" class="text-xs" style="color:#10b981">✓</span>
               <span x-text="formatTool(tc.name, tc.args)"></span>
             </div>
           </template>
 
-          <!-- Thinking dots (shown until first tool_start or done) -->
+          <!-- Thinking dots -->
           <div x-show="pendingMsg.showThinking"
-               class="chat-bubble bg-base-200 border border-base-300 px-4 py-3">
-            <span class="loading loading-dots loading-sm text-base-content/60"></span>
+               class="chat-bubble bubble-bot px-4 py-3">
+            <span class="loading loading-dots loading-sm opacity-60"></span>
           </div>
 
         </div>
@@ -234,11 +261,13 @@
       :placeholder="_t('placeholder')"
       :disabled="busy"
       rows="1"
-      class="textarea textarea-bordered flex-1 resize-none min-h-[40px] max-h-[140px] bg-base-100 text-base-content text-sm leading-relaxed"
+      class="textarea flex-1 resize-none min-h-[40px] max-h-[140px] text-sm leading-relaxed bg-base-100 text-base-content placeholder:text-muted"
+      style="border:1px solid #374151; border-radius:8px; outline:none; transition:border-color .2s"
+      onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#374151'"
     ></textarea>
     <button @click="send()"
             :disabled="busy || !$store.app.wsConnected"
-            class="btn btn-primary shrink-0 h-10 min-h-0"
+            class="btn btn-primary shrink-0 h-10 min-h-0 font-medium"
             x-text="_t('sendBtn')"></button>
   </div>
 
@@ -250,7 +279,7 @@
 <div x-data="flashcards"
      x-show="$store.app.mode === 'flashcards'"
      @keydown.window="handleKey($event)"
-     class="flex flex-col flex-1 min-h-0 items-center justify-center gap-4 px-4 py-5">
+     class="flex flex-col flex-1 min-h-0 items-center justify-center gap-5 px-4 py-6">
 
   <!-- Loading skeleton -->
   <template x-if="loading">
@@ -263,9 +292,10 @@
 
   <!-- Error state -->
   <template x-if="error && !loading">
-    <div class="alert alert-error max-w-lg">
-      ⚠ <span x-text="error"></span>
-      <button class="btn btn-sm btn-ghost ml-auto" @click="fetchBatch()" x-text="_t('fcNext')"></button>
+    <div class="flex items-center gap-3 max-w-lg w-full rounded-xl px-4 py-3 text-sm"
+         style="background:rgba(244,63,94,.1); border:1px solid #f43f5e; color:#f43f5e">
+      ⚠ <span x-text="error" class="flex-1"></span>
+      <button class="btn btn-xs btn-ghost" @click="fetchBatch()" x-text="_t('fcNext')"></button>
     </div>
   </template>
 
@@ -275,38 +305,40 @@
 
       <!-- Topic badge + progress -->
       <div class="flex flex-col items-center gap-1">
-        <div class="badge badge-outline border-info text-info text-xs px-3 py-2 max-w-[90vw] truncate"
+        <div class="badge badge-outline text-xs px-3 py-2 max-w-[90vw] truncate font-medium"
+             style="border-color:#14b8a6; color:#14b8a6"
              x-text="topicLabel"></div>
-        <div class="text-xs text-base-content/50" x-text="progress"></div>
+        <div class="text-xs" style="color:#94a3b8" x-text="progress"></div>
       </div>
 
       <!-- 3D flip card -->
-      <div class="[perspective:1000px] w-[620px] max-w-[90vw] h-64 cursor-pointer"
+      <div class="[perspective:1000px] w-[620px] max-w-[90vw] h-64 cursor-pointer fc-card-shadow rounded-xl"
            @click="flipCard()">
         <div class="relative w-full h-full [transform-style:preserve-3d] transition-transform duration-[450ms]"
              :class="cardFlipped ? '[transform:rotateY(180deg)]' : ''">
 
           <!-- Front face -->
           <div class="absolute inset-0 [backface-visibility:hidden] rounded-xl
-                      bg-base-200 border border-base-300
-                      flex flex-col items-center justify-center gap-3 p-7 text-center">
-            <span class="text-[10px] uppercase tracking-widest text-base-content/40"
+                      flex flex-col items-center justify-center gap-3 p-8 text-center"
+               style="background:#1f2937; border:1px solid #374151">
+            <span class="text-[10px] uppercase tracking-widest font-semibold"
+                  style="color:#94a3b8"
                   x-text="_t('fcLabel')"></span>
-            <p class="text-base leading-relaxed text-base-content"
+            <p class="text-base leading-relaxed" style="color:#cdd6f4"
                x-text="currentCard.question"></p>
           </div>
 
           <!-- Back face -->
           <div class="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-xl
-                      bg-base-300 border border-info/40
-                      flex flex-col items-center justify-center gap-3 p-7 text-center">
-            <p class="text-base leading-relaxed text-base-content"
+                      flex flex-col items-center justify-center gap-3 p-8 text-center"
+               style="background:#162032; border:1px solid rgba(20,184,166,.35)">
+            <p class="text-base leading-relaxed" style="color:#cdd6f4"
                x-text="currentCard.answer"></p>
             <template x-if="currentCard.source">
               <a :href="obsidianHref(currentCard.source)"
-                 class="badge badge-success badge-outline text-xs hover:opacity-80"
-                 @click.stop
-                 title="Open in Obsidian">
+                 class="badge badge-outline text-xs hover:opacity-75 transition-opacity"
+                 style="border-color:#10b981; color:#10b981"
+                 @click.stop title="Open in Obsidian">
                 📄 <span x-text="currentCard.source"></span>
               </a>
             </template>
@@ -315,27 +347,28 @@
         </div>
       </div><!-- /flip card -->
 
-      <!-- Navigation buttons -->
+      <!-- Navigation -->
       <div class="flex flex-col items-center gap-2">
         <div class="flex gap-2">
-          <button class="btn btn-ghost btn-sm"
+          <button class="btn btn-sm font-medium"
+                  style="background:#1f2937; border:1px solid #374151; color:#cdd6f4"
                   :disabled="isPrevDisabled"
                   @click="prevCard()"
                   x-text="_t('fcPrev')"></button>
-          <button class="btn btn-primary btn-sm"
+          <button class="btn btn-sm btn-primary font-medium"
                   :disabled="isNextDisabled"
                   @click="nextCard()"
                   x-text="_t('fcNext')"></button>
         </div>
-        <p class="text-xs text-base-content/40" x-text="_t('fcHint')"></p>
+        <p class="text-xs" style="color:#94a3b8" x-text="_t('fcHint')"></p>
       </div>
 
     </div>
   </template>
 
-  <!-- Empty state: panel visible but no card yet and no error -->
+  <!-- Empty state -->
   <template x-if="!currentCard && !loading && !error">
-    <button class="btn btn-primary" @click="fetchBatch()" x-text="_t('fcNext')"></button>
+    <button class="btn btn-primary font-medium" @click="fetchBatch()" x-text="_t('fcNext')"></button>
   </template>
 
 </div><!-- /flashcards panel -->
