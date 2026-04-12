@@ -26,6 +26,8 @@ jobs:
           echo "VAULT_PATH=/home/matafix/obsidian_vault" >> .env
           echo "SAVE_INDEX_PATH=/home/matafix/obsidian_knowlage/faiss" >> .env
           echo "FRONTEND_PORT=8005" >> .env
+          echo "HTTPS_PROXY=${{ secrets.HTTPS_PROXY }}" >> .env
+          echo "HTTP_PROXY=${{ secrets.HTTPS_PROXY }}" >> .env
 
       # 3. Пересобираем и запускаем контейнеры
       # Флаг --build заставит Docker пересобрать образы, если код изменился
