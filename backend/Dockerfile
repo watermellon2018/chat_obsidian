@@ -19,8 +19,8 @@ RUN apt-get update && \
 # Copy installed packages from builder
 COPY --from=builder /install /usr/local
 
-# Copy all backend source code
-COPY . .
+COPY backend/ .
+COPY mcp_server/ ./mcp_server/
 
 # The vault is mounted at runtime via Docker volume — do not bake it in.
 # Default path: /vault (override with VAULT_PATH env var)
