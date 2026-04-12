@@ -59,7 +59,12 @@ async def rag_ws(websocket: WebSocket) -> None:
     """
     await websocket.accept()
 
-    rag = get_rag_chain()  # singleton — FAISS already loaded
+    try:
+        rag = get_rag_chain()
+    except Exception as exc:
+        await websocket.send_json({"type": "error", "content": str(exc)})
+        await websocket.close()
+        return
 
     try:
         while True:
