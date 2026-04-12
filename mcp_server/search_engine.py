@@ -19,10 +19,6 @@ class SearchEngine:
         self._bm25: BM25Plus | None = None
         self._build()
 
-    # ------------------------------------------------------------------
-    # Index construction
-    # ------------------------------------------------------------------
-
     def _tokenize(self, text: str) -> list[str]:
         """Lowercase, strip markdown syntax noise, split on non-alphanumeric."""
         text = re.sub(r"[#*_`\[\]>~|]", " ", text.lower())
@@ -41,10 +37,6 @@ class SearchEngine:
 
         if corpus:
             self._bm25 = BM25Plus(corpus)
-
-    # ------------------------------------------------------------------
-    # Query
-    # ------------------------------------------------------------------
 
     def search(self, query: str, limit: int = 5) -> list[dict]:
         """Return top-k results with path, title, snippet, score."""

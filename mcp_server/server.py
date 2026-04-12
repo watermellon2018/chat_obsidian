@@ -11,10 +11,11 @@ import os
 import sys
 from pathlib import Path
 
-# Ensure the project root is on sys.path when the server runs as a subprocess
-_project_root = Path(__file__).parent.parent
-if str(_project_root) not in sys.path:
-    sys.path.insert(0, str(_project_root))
+# Add backend/ to sys.path so that `mcp_server.*` imports resolve correctly
+# when this script is run as a subprocess from any working directory.
+_backend_root = Path(__file__).parent.parent
+if str(_backend_root) not in sys.path:
+    sys.path.insert(0, str(_backend_root))
 
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP

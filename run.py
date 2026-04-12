@@ -109,7 +109,7 @@ def run_web(model, config: Config, port: int) -> None:
 
 async def run_cli(model, config: Config) -> None:
     from client.mcp_client import MCPClient
-    from services.orchestrator import Orchestrator
+    from backend.services.orchestrator import Orchestrator
 
     print("\033[1mObsidian MCP Chat (CLI)\033[0m")
     print("Your notes are the primary source of truth.")

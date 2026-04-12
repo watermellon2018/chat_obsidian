@@ -37,3 +37,7 @@ vault/
 .claude/worktrees/
 
 db/ 
+
+.claude/
+.vscode
+__pycache__/
