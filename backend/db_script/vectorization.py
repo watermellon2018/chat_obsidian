@@ -1,4 +1,3 @@
-import getpass
 import os
 import sys
 from pathlib import Path
@@ -9,19 +8,18 @@ _repo_root = Path(__file__).resolve().parents[2]
 if str(_repo_root) not in sys.path:
     sys.path.insert(0, str(_repo_root))
 
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 
 from backend.db_script.embeddings import build_chunks
 
-if not os.getenv("GEMINI_API_KEY"):
-    os.environ["GEMINI_API_KEY"] = getpass.getpass("Enter your Google API key: ")
-
 
 def main():
-    model_embeddings = GoogleGenerativeAIEmbeddings(model="gemini-embedding-2-preview",
-                                                    api_key=os.getenv("GEMINI_API_KEY"),
-                                                    task_type='RETRIEVAL_DOCUMENT')
+    model_embeddings = OpenAIEmbeddings(
+        model="openai/text-embedding-3-small",
+        openai_api_key=os.getenv("OPENROUTER_API_KEY"),
+        openai_api_base="https://openrouter.ai/api/v1",
+    )
     
     vault_path = os.getenv("VAULT_PATH")
     if not vault_path:
