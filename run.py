@@ -4,14 +4,17 @@ Entry point for the Obsidian MCP Chat system.
 Usage:
     python run.py                          # Web UI on :7860 (default)
     python run.py --port 8080              # Custom port
+    python run.py --model openrouter       # OpenRouter (default)
     python run.py --model ollama           # Local Ollama
+    python run.py --model gemini           # Google Gemini
     python run.py --ui cli                 # Terminal chat
     python run.py --model ollama --ollama-model llama3.2:3b
 
 Prerequisites:
-    Gemini:  Set GEMINI_API_KEY in .env  (https://aistudio.google.com)
-    Ollama:  `ollama serve` running + model pulled
-             e.g. `ollama pull qwen2.5:7b-instruct-q4_K_M`
+    OpenRouter: Set OPENROUTER_API_KEY in .env  (https://openrouter.ai/keys)
+    Gemini:     Set GEMINI_API_KEY in .env  (https://aistudio.google.com)
+    Ollama:     `ollama serve` running + model pulled
+                e.g. `ollama pull qwen2.5:7b-instruct-q4_K_M`
 """
 from __future__ import annotations
 
@@ -34,9 +37,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--model",
-        choices=["gemini", "ollama"],
-        default="gemini",
-        help="Model backend (default: gemini)",
+        choices=["openrouter", "gemini", "ollama"],
+        default="openrouter",
+        help="Model backend (default: openrouter)",
     )
     parser.add_argument(
         "--ollama-model",
@@ -60,6 +63,20 @@ def parse_args() -> argparse.Namespace:
 
 
 def build_model(config: Config):
+    if config.model_backend == "openrouter":
+        from model.openrouter_model import OpenRouterModel
+
+        if not config.openrouter_api_key:
+            print(
+                "ERROR: OPENROUTER_API_KEY is not set.\n"
+                "  1. Go to https://openrouter.ai/keys\n"
+                "  2. Create an API key\n"
+                "  3. Add to .env:  OPENROUTER_API_KEY=your_key",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        return OpenRouterModel(config)
+
     if config.model_backend == "gemini":
         from model.gemini_model import GeminiModel
 

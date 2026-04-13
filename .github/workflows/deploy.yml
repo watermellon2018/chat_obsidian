@@ -26,9 +26,9 @@ jobs:
           echo "VAULT_PATH=/home/matafix/obsidian_vault" >> .env
           echo "SAVE_INDEX_PATH=/home/matafix/obsidian_knowlage/faiss" >> .env
           echo "FRONTEND_PORT=8005" >> .env
-          echo "HTTPS_PROXY=${{ secrets.HTTPS_PROXY }}" >> .env
-          echo "HTTP_PROXY=${{ secrets.HTTPS_PROXY }}" >> .env
-          echo "GRPC_PROXY_EXP=${{ secrets.HTTPS_PROXY }}" >> .env
+          echo "MODEL_BACKEND=openrouter" > .env
+          echo "OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}" >> .env
+          echo "BASE_URL=https://openrouter.ai/api/v1" >> .env
 
       # 3. Пересобираем и запускаем контейнеры
       # Флаг --build заставит Docker пересобрать образы, если код изменился

@@ -14,7 +14,17 @@ class Config:
     vault_path: Path = field(
         default_factory=lambda: Path(os.getenv("VAULT_PATH", "./vault")).resolve()
     )
-    model_backend: str = "gemini"  # "gemini" | "ollama"
+    model_backend: str = field(
+        default_factory=lambda: os.getenv("MODEL_BACKEND", "openrouter")
+    )
+
+    # OpenRouter
+    openrouter_api_key: str = field(
+        default_factory=lambda: os.getenv("OPENROUTER_API_KEY", "")
+    )
+    openrouter_model: str = field(
+        default_factory=lambda: os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-flash")
+    )
 
     # Gemini
     gemini_api_key: str = field(

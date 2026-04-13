@@ -2,12 +2,13 @@
 Backend entry point.
 
 Usage (development):
-    python main.py                        # Gemini, port 8000
+    python main.py                        # OpenRouter, port 8000
     python main.py --model ollama         # Local Ollama
+    python main.py --model gemini         # Google Gemini
     python main.py --port 9000            # Custom port
 
 Usage (production via Docker):
-    Set MODEL_BACKEND, GEMINI_API_KEY / OLLAMA_MODEL env vars,
+    Set MODEL_BACKEND, OPENROUTER_API_KEY / GEMINI_API_KEY / OLLAMA_MODEL env vars,
     then: uvicorn main:app --host 0.0.0.0 --port 8000
 """
 from __future__ import annotations
@@ -23,8 +24,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Obsidian MCP Backend")
     parser.add_argument(
         "--model",
-        choices=["gemini", "ollama"],
-        default=os.getenv("MODEL_BACKEND", "gemini"),
+        choices=["openrouter", "gemini", "ollama"],
+        default=os.getenv("MODEL_BACKEND", "openrouter"),
     )
     parser.add_argument(
         "--ollama-model",
@@ -38,6 +39,18 @@ def parse_args() -> argparse.Namespace:
 
 
 def build_model(config: Config):
+    if config.model_backend == "openrouter":
+        from model.openrouter_model import OpenRouterModel
+
+        if not config.openrouter_api_key:
+            print(
+                "ERROR: OPENROUTER_API_KEY is not set.\n"
+                "  Set it in .env or as an environment variable.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        return OpenRouterModel(config)
+
     if config.model_backend == "gemini":
         from model.gemini_model import GeminiModel
 
@@ -61,7 +74,7 @@ def _build_app():
     """Called at module level so `uvicorn main:app` works without CLI args."""
     from api.app import create_app
 
-    config = Config(model_backend=os.getenv("MODEL_BACKEND", "gemini"))
+    config = Config(model_backend=os.getenv("MODEL_BACKEND", "openrouter"))
     model = build_model(config)
     return create_app(model, config)
 
