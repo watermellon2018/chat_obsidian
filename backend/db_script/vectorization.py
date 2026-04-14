@@ -30,6 +30,10 @@ def main():
         model=EMBEDDING_MODEL,
         openai_api_key=api_key,
         openai_api_base="https://openrouter.ai/api/v1",
+        default_headers={
+            "HTTP-Referer": "http://my-obsidian-chat.local",  
+            "X-Title": "Obsidian RAG" 
+        },
     )
     
     vault_path = os.getenv("VAULT_PATH")

@@ -41,6 +41,10 @@ def load_faiss() -> FAISS:
         model="openai/text-embedding-3-small",
         openai_api_key=os.getenv("OPENROUTER_API_KEY"),
         openai_api_base="https://openrouter.ai/api/v1",
+        default_headers={
+            "HTTP-Referer": "http://my-obsidian-chat.local", 
+            "X-Title": "Obsidian RAG" 
+        },
     )
 
     vector_store = FAISS.load_local(
