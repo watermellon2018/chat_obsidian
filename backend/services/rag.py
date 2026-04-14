@@ -186,6 +186,7 @@ async def generate_flashcard_batch(
     min_cards: int = 3,
     max_cards: int = 6,
     language: str = "en",
+    topic: str | None = None,
 ) -> dict:
     """
     Generates a batch of 3-6 flashcards on one topic:
@@ -205,26 +206,29 @@ async def generate_flashcard_batch(
     min_cards      : minimum number of flashcards (passed to the prompt)
     max_cards      : maximum number of flashcards (passed to the prompt)
     """
-    # ── Step 1: random chunk from FAISS ───────────────────────────────
-    all_docs = list(retrieval._store.docstore._dict.values())
-    if not all_docs:
-        raise ValueError("FAISS index is empty — run vectorization.py first")
+    if topic:
+        # ── User-specified topic: skip random chunk + LLM extraction ──
+        pass
+    else:
+        # ── Step 1: random chunk from FAISS ───────────────────────────
+        all_docs = list(retrieval._store.docstore._dict.values())
+        if not all_docs:
+            raise ValueError("FAISS index is empty — run vectorization.py first")
 
-    seen = set(exclude_topics or [])
-    # Try to find a chunk from a not-yet-exhausted source
-    candidates = [d for d in all_docs if d.metadata.get("source") not in seen]
-    if not candidates:
-        candidates = all_docs  # all topics shown → reset cycle
+        seen = set(exclude_topics or [])
+        candidates = [d for d in all_docs if d.metadata.get("source") not in seen]
+        if not candidates:
+            candidates = all_docs  # all topics shown → reset cycle
 
-    seed_doc = random.choice(candidates)
+        seed_doc = random.choice(candidates)
 
-    # ── Step 2: extract the key topic ─────────────────────────────────
-    topic_messages = [
-        {"role": "system", "content": RAG_TOPIC_EXTRACTION_PROMPT},
-        {"role": "user",   "content": seed_doc.page_content},
-    ]
-    topic_response = await model.chat(topic_messages, tools=[])
-    topic = topic_response.text.strip().strip("\"'")
+        # ── Step 2: extract the key topic ─────────────────────────────
+        topic_messages = [
+            {"role": "system", "content": RAG_TOPIC_EXTRACTION_PROMPT},
+            {"role": "user",   "content": seed_doc.page_content},
+        ]
+        topic_response = await model.chat(topic_messages, tools=[])
+        topic = topic_response.text.strip().strip("\"'")
 
     # ── Step 3: search for similar chunks by topic ────────────────────
     chunks: list[SearchResult] = retrieval.search(topic, top_k=top_k)
@@ -243,9 +247,10 @@ async def generate_flashcard_batch(
 
     # ── Step 4: generate the flashcard batch ──────────────────────────
     lang_note = LANGUAGE_INSTRUCTION.get(language, "")
+    user_topic_note = f"\nUser-specified topic: {topic}" if topic else ""
     cards_system = (
-        f"{RAG_BATCH_FLASHCARD_PROMPT}\n\n{lang_note}" if lang_note
-        else RAG_BATCH_FLASHCARD_PROMPT
+        f"{RAG_BATCH_FLASHCARD_PROMPT}{user_topic_note}\n\n{lang_note}" if lang_note
+        else f"{RAG_BATCH_FLASHCARD_PROMPT}{user_topic_note}"
     )
     cards_messages = [
         {"role": "system", "content": cards_system},

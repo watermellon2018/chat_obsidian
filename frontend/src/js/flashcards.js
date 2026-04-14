@@ -22,6 +22,7 @@ export function flashcardsComponent() {
     cardFlipped:  false,
     seenTopics:   [],
     topic:        '',
+    userTopic:    '',
     loading:      false,
     error:        null,
 
@@ -52,13 +53,7 @@ export function flashcardsComponent() {
     // ── Lifecycle ──────────────────────────────────────────────────────────
 
     init() {
-      // Auto-fetch when switching to flashcards mode for the first time
-      this.$watch(
-        () => this.$store.app.mode,
-        m => {
-          if (m === 'flashcards' && !this.currentBatch.length) this.fetchBatch();
-        }
-      );
+      // No auto-fetch: user must click Generate or Random explicitly
     },
 
     // ── Navigation ─────────────────────────────────────────────────────────
@@ -95,7 +90,10 @@ export function flashcardsComponent() {
 
     handleKey(e) {
       if (this.$store.app.mode !== 'flashcards') return;
-      if (e.key === ' ')                            { e.preventDefault(); this.flipCard(); }
+      // Don't intercept keystrokes while user is typing in an input or textarea
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (e.key === ' ')                                { e.preventDefault(); this.flipCard(); }
       else if (e.key === 'ArrowRight' || e.key === 'n') { e.preventDefault(); this.nextCard(); }
       else if (e.key === 'ArrowLeft'  || e.key === 'p') { e.preventDefault(); this.prevCard(); }
     },
@@ -117,7 +115,13 @@ export function flashcardsComponent() {
       return renderMarkdownToHtml(raw || '');
     },
 
-    // ── Fetch ──────────────────────────────────────────────────────────────
+    // ── Fetch ─────────────────────────────────────────────────────────────
+
+    /** Generate with userTopic cleared — pure random mode. */
+    async fetchRandom() {
+      this.userTopic = '';
+      await this.fetchBatch();
+    },
 
     async fetchBatch() {
       this.loading     = true;
@@ -125,12 +129,14 @@ export function flashcardsComponent() {
       this.cardFlipped = false;
       this.topic       = '';
 
-      const lang    = this.$store.app.lang;
-      const exclude = this.seenTopics.join(',');
+      const lang       = this.$store.app.lang;
+      const exclude    = this.seenTopics.join(',');
+      const trimmed    = this.userTopic.trim();
+      const topicParam = trimmed ? `&topic=${encodeURIComponent(trimmed)}` : '';
 
       try {
         const res = await fetch(
-          `/flashcard/batch?exclude_topics=${encodeURIComponent(exclude)}&lang=${lang}`
+          `/flashcard/batch?exclude_topics=${encodeURIComponent(exclude)}&lang=${lang}${topicParam}`
         );
         if (!res.ok) throw new Error(t(lang, 'serverErr', res.status));
 
@@ -141,7 +147,8 @@ export function flashcardsComponent() {
         this.currentBatch = cards;
         this.batchIndex   = 0;
         this.topic        = data.topic || '';
-        this.seenTopics.push(data.topic);
+        // Не дедуплицируем если тема задана вручную
+        if (!trimmed) this.seenTopics.push(data.topic);
       } catch (err) {
         this.error = err.message;
       } finally {

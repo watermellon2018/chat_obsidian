@@ -399,6 +399,25 @@
         </div>
       </div><!-- /flip card -->
 
+      <!-- Topic input + Generate + Random -->
+      <div class="flex gap-2 items-center w-[620px] max-w-[90vw]">
+        <input type="text"
+               class="input input-sm flex-1"
+               style="background:#1f2937; border:1px solid #374151; color:#cdd6f4"
+               :placeholder="_t('fcTopicPlaceholder')"
+               x-model="userTopic"
+               @keydown.enter.prevent="fetchBatch()" />
+        <button class="btn btn-sm btn-primary font-medium"
+                :disabled="loading"
+                @click="fetchBatch()"
+                x-text="_t('fcGenerate')"></button>
+        <button class="btn btn-sm font-medium"
+                style="background:#1f2937; border:1px solid #374151; color:#cdd6f4"
+                :disabled="loading"
+                @click="fetchRandom()"
+                x-text="_t('fcRandom')"></button>
+      </div>
+
       <!-- Navigation -->
       <div class="flex flex-col items-center gap-2">
         <div class="flex gap-2">
@@ -420,7 +439,25 @@
 
   <!-- Empty state -->
   <template x-if="!currentCard && !loading && !error">
-    <button class="btn btn-primary font-medium" @click="fetchBatch()" x-text="_t('fcNext')"></button>
+    <div class="flex flex-col items-center gap-3">
+      <div class="flex gap-2 items-center w-[420px] max-w-[90vw]">
+        <input type="text"
+               class="input input-sm flex-1"
+               style="background:#1f2937; border:1px solid #374151; color:#cdd6f4"
+               :placeholder="_t('fcTopicPlaceholder')"
+               x-model="userTopic"
+               @keydown.enter.prevent="fetchBatch()" />
+        <button class="btn btn-sm btn-primary font-medium"
+                :disabled="loading"
+                @click="fetchBatch()"
+                x-text="_t('fcGenerate')"></button>
+        <button class="btn btn-sm font-medium"
+                style="background:#1f2937; border:1px solid #374151; color:#cdd6f4"
+                :disabled="loading"
+                @click="fetchRandom()"
+                x-text="_t('fcRandom')"></button>
+      </div>
+    </div>
   </template>
 
 </div><!-- /flashcards panel -->

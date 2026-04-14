@@ -89,7 +89,7 @@ async def rag_ws(websocket: WebSocket) -> None:
 
 
 @router.get("/flashcard/batch")
-async def get_flashcard_batch(exclude_topics: str = "", lang: str = "en") -> dict:
+async def get_flashcard_batch(exclude_topics: str = "", lang: str = "en", topic: str = "") -> dict:
     """
     Generates a batch of 3-6 flashcards on one topic from the knowledge base.
 
@@ -116,6 +116,7 @@ async def get_flashcard_batch(exclude_topics: str = "", lang: str = "en") -> dic
             retrieval=rag._retrieval,
             exclude_topics=exclude_list,
             language=lang,
+            topic=topic or None,
         )
     except Exception as exc:
         log.exception("generate_flashcard_batch failed")
