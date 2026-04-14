@@ -97,8 +97,7 @@ VAULT_PATH=/path/to/your/obsidian/vault
 # Where to save the FAISS vector index
 SAVE_INDEX_PATH=/path/to/faiss_index
 
-# Embedding model — downloaded automatically on first run (~120 MB)
-EMBEDDING_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+EMBEDDING_MODEL="openai/text-embedding-3-small"
 ```
 
 > **Using Ollama?** Start the Ollama server first:
@@ -222,7 +221,7 @@ chat_obsidian/
 | `OLLAMA_BASE_URL` | no | `http://localhost:11434` | Ollama server URL |
 | `VAULT_PATH` | yes | `./vault` | Path to Obsidian vault folder |
 | `SAVE_INDEX_PATH` | for RAG | — | Directory for FAISS index files |
-| `EMBEDDING_MODEL` | no | `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` | HuggingFace embedding model |
+| `EMBEDDING_MODEL` | no | `"openai/text-embedding-3-small"` | OpenaAI embedding model |
 
 ---
 
