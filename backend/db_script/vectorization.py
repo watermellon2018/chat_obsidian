@@ -3,21 +3,32 @@ import sys
 from pathlib import Path
 from uuid import uuid4
 
+from dotenv import load_dotenv
+
 # Repo root must be on path when running this file directly (not `python -m ...`).
 _repo_root = Path(__file__).resolve().parents[2]
 if str(_repo_root) not in sys.path:
     sys.path.insert(0, str(_repo_root))
+
+load_dotenv()
 
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 
 from backend.db_script.embeddings import build_chunks
 
+EMBEDDING_MODEL = "openai/text-embedding-3-small"
+
 
 def main():
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    if not api_key:
+        print("Error: OPENROUTER_API_KEY is not set")
+        return
+
     model_embeddings = OpenAIEmbeddings(
-        model="text-embedding-3-small",
-        openai_api_key=os.getenv("OPENROUTER_API_KEY"),
+        model=EMBEDDING_MODEL,
+        openai_api_key=api_key,
         openai_api_base="https://openrouter.ai/api/v1",
     )
     
