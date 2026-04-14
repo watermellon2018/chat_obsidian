@@ -9,8 +9,9 @@ services:
       dockerfile: backend/Dockerfile
     restart: unless-stopped
     environment:
-      MODEL_BACKEND: ${MODEL_BACKEND:-gemini}
-      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      MODEL_BACKEND: ${MODEL_BACKEND:-openrouter}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-deepseek/deepseek-chat-v3.1}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:7b-instruct-q4_K_M}
       # When using Ollama, point to the host machine or a dedicated container
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}

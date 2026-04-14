@@ -8,64 +8,17 @@ _repo_root = Path(__file__).resolve().parents[2]
 if str(_repo_root) not in sys.path:
     sys.path.insert(0, str(_repo_root))
 
+from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 
 from backend.db_script.embeddings import build_chunks
 
 
 def main():
-    # Для использования Qwen3-Embedding-8B через OpenRouter, 
-    # langchain_openai.OpenAIEmbeddings не поддерживает кастомные модели 
-    # (как Qwen) через OpenRouter, потому что они нельзя вызвать embedding через обычный openai endpoint.
-    # Можно сделать руками: HTTP запрос к openrouter.ai/api/v1/embeddings, соблюдая их формат.
-    import httpx
-
-    class OpenRouterQwenEmbeddings:
-        def __init__(self, api_key: str, model: str, api_base: str = "https://openrouter.ai/api/v1"):
-            self.api_key = api_key
-            self.model = model
-            self.api_base = api_base
-
-        def embed_documents(self, texts: list[str]) -> list[list[float]]:
-            # OpenRouter ожидает один документ на запрос
-            res = []
-            for text in texts:
-                resp = httpx.post(
-                    f"{self.api_base}/embeddings",
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "HTTP-Referer": "http://localhost",
-                        "X-Title": "obsidian-chat"
-                    },
-                    json={
-                        "model": self.model,
-                        "input": text,
-                    },
-                    timeout=None
-                )
-                resp.raise_for_status()
-                res.append(resp.json()["data"][0]["embedding"])
-            return res
-
-        def embed_query(self, text: str) -> list[float]:
-            resp = httpx.post(
-                f"{self.api_base}/embeddings",
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "HTTP-Referer": "http://localhost",
-                    "X-Title": "obsidian-chat"
-                },
-                json={
-                    "model": self.model,
-                    "input": text,
-                }
-            )
-            resp.raise_for_status()
-            return resp.json()["data"][0]["embedding"]
-
-    model_embeddings = OpenRouterQwenEmbeddings(
-        api_key=os.getenv("OPENROUTER_API_KEY"),
-        model="qwen/qwen3-embedding-8b"
+    model_embeddings = OpenAIEmbeddings(
+        model="text-embedding-3-small",
+        openai_api_key=os.getenv("OPENROUTER_API_KEY"),
+        openai_api_base="https://openrouter.ai/api/v1",
     )
     
     vault_path = os.getenv("VAULT_PATH")

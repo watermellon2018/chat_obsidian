@@ -21,15 +21,14 @@ jobs:
       # Это важно, так как .env не хранится в git
       - name: Create .env file
         run: |
-          echo "MODEL_BACKEND=gemini" > .env
-          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
-          echo "VAULT_PATH=/home/matafix/obsidian_vault" >> .env
-          echo "SAVE_INDEX_PATH=/home/matafix/obsidian_knowlage/faiss" >> .env
-          echo "FRONTEND_PORT=8005" >> .env
-          echo "MODEL_BACKEND=openrouter" > .env
-          echo "OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}" >> .env
-          echo "OPENROUTER_MODEL=${{ secrets.OPENROUTER_MODEL }}" >> .env
-          echo "BASE_URL=https://openrouter.ai/api/v1" >> .env
+          cat > .env << EOF
+          MODEL_BACKEND=openrouter
+          OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODEL=${{ secrets.OPENROUTER_MODEL }}
+          VAULT_PATH=/home/matafix/obsidian_vault
+          SAVE_INDEX_PATH=/home/matafix/obsidian_knowlage/faiss
+          FRONTEND_PORT=8005
+          EOF
 
       # 3. Пересобираем и запускаем контейнеры
       # Флаг --build заставит Docker пересобрать образы, если код изменился
