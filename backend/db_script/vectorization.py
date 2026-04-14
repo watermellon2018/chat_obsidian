@@ -75,7 +75,7 @@ def main():
     uuids = [str(uuid4()) for _ in range(len(chunks))]
 
     print(f"Create database from {len(chunks)} fragments. This may take time...")
-    vector_store = FAISS.from_documents(chunks, model_embeddings, ids=uuids)
+    vector_store = FAISS.from_documents(chunks, model_embeddings, ids=uuids, chunk_size=20)
 
     index_path = os.getenv("SAVE_INDEX_PATH")
     if not index_path:
