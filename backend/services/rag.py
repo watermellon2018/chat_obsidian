@@ -50,7 +50,7 @@ class RagChain:
     # Public method
     # ------------------------------------------------------------------
 
-    async def ask(self, question: str, top_k: int = 3, language: str = "en") -> RagAnswer:
+    async def ask(self, question: str, top_k: int = 8, language: str = "en") -> RagAnswer:
         """
         Accept a question, find relevant chunks, get an answer from the model.
 

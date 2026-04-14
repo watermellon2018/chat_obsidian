@@ -24,7 +24,7 @@ jobs:
           echo "MODEL_BACKEND=openrouter" > .env
           echo "OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}" >> .env
           echo "OPENROUTER_MODEL=${{ secrets.OPENROUTER_MODEL }}" >> .env
-          echo "VAULT_PATH=/home/matafix/obsidian_vault" >> .env
+          echo "VAULT_PATH=/home/matafix/obsidian_knowlage/md_store" >> .env
           echo "SAVE_INDEX_PATH=/home/matafix/obsidian_knowlage/faiss" >> .env
           echo "FRONTEND_PORT=8005" >> .env
 

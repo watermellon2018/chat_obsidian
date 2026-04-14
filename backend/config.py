@@ -23,7 +23,7 @@ class Config:
         default_factory=lambda: os.getenv("OPENROUTER_API_KEY", "")
     )
     openrouter_model: str = field(
-        default_factory=lambda: os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-flash")
+        default_factory=lambda: os.getenv("OPENROUTER_MODEL", "deepseek/deepseek-chat-v3.1")
     )
 
     # Gemini
