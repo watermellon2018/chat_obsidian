@@ -58,7 +58,8 @@ def load_faiss() -> FAISS:
                     json={
                         "model": self.model,
                         "input": text,
-                    }
+                    },
+                    timeout=None
                 )
                 resp.raise_for_status()
                 res.append(resp.json()["data"][0]["embedding"])
