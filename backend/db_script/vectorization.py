@@ -15,11 +15,15 @@ from backend.db_script.embeddings import build_chunks
 
 
 def main():
-    model_embeddings = OpenAIEmbeddings(
-        model="openai/text-embedding-3-small",
-        openai_api_key=os.getenv("OPENROUTER_API_KEY"),
-        openai_api_base="https://openrouter.ai/api/v1",
-    )
+    from langchain_google_genai import GoogleGenerativeAIEmbeddings
+    model_embeddings = GoogleGenerativeAIEmbeddings(model="gemini-embedding-2-preview",
+                                                    api_key=os.getenv("GEMINI_API_KEY"),
+                                                    task_type='RETRIEVAL_DOCUMENT')
+    # model_embeddings = OpenAIEmbeddings(
+    #     model="openai/text-embedding-3-small",
+    #     openai_api_key=os.getenv("OPENROUTER_API_KEY"),
+    #     openai_api_base="https://openrouter.ai/api/v1",
+    # )
     
     vault_path = os.getenv("VAULT_PATH")
     if not vault_path:
