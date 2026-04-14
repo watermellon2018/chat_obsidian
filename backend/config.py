@@ -12,7 +12,7 @@ load_dotenv()
 @dataclass
 class Config:
     vault_path: Path = field(
-        default_factory=lambda: Path(os.getenv("VAULT_PATH", "./vault")).resolve()
+        default_factory=lambda: Path(os.getenv("VAULT_PATH")).resolve()
     )
     model_backend: str = field(
         default_factory=lambda: os.getenv("MODEL_BACKEND", "openrouter")
@@ -25,12 +25,6 @@ class Config:
     openrouter_model: str = field(
         default_factory=lambda: os.getenv("OPENROUTER_MODEL", "deepseek/deepseek-chat-v3.1")
     )
-
-    # Gemini
-    gemini_api_key: str = field(
-        default_factory=lambda: os.getenv("GEMINI_API_KEY", "")
-    )
-    gemini_model: str = "gemini-2.5-flash"
 
     # Ollama
     ollama_model: str = field(

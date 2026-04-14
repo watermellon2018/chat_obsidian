@@ -21,8 +21,7 @@ COPY . .
 
 # The vault is mounted at runtime via Docker volume — do not bake it in.
 # Default path: /vault (override with VAULT_PATH env var)
-ENV VAULT_PATH=/vault \
-    PORT=8000 \
+ENV PORT=8000 \
     HOST=0.0.0.0 \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -32,5 +31,5 @@ EXPOSE 8000
 
 WORKDIR /app/backend
 # uvicorn imports main:app which calls _build_app() using MODEL_BACKEND env var.
-# Pass MODEL_BACKEND=gemini (default) or MODEL_BACKEND=ollama at runtime.
+# Pass MODEL_BACKEND=openrouter (default) or MODEL_BACKEND=ollama at runtime.
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -29,8 +29,8 @@ from mcp_server.search_engine import SearchEngine
 # Initialization (runs once when the subprocess starts)
 # ------------------------------------------------------------------
 
-VAULT_PATH = Path(os.getenv("VAULT_PATH", "./vault")).resolve()
-
+VAULT_PATH = Path(os.getenv("VAULT_PATH")).resolve()
+print('VAULT_PATH:', VAULT_PATH)
 _parser = VaultParser(VAULT_PATH)
 _search = SearchEngine(_parser)
 

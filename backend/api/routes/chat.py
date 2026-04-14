@@ -1,7 +1,7 @@
 """
 Chat routes:
   WS  /ws               — MCP chat: model calls Obsidian tools
-  WS  /ask              — RAG chat: answer based on FAISS search over chunks
+  WS  /ask              — RAG chat: answer based on FAISS semantic search over chunks
   GET /flashcard/batch  — RAG flashcards: batch of 3-6 questions on one topic
 """
 from __future__ import annotations
@@ -50,7 +50,7 @@ async def chat_ws(websocket: WebSocket) -> None:
 @router.websocket("/ask")
 async def rag_ws(websocket: WebSocket) -> None:
     """
-    RAG chat: each question → FAISS search → Gemini → answer.
+    RAG chat: each question → FAISS search → model → answer.
 
     Message format matches /ws for frontend compatibility:
       Client → {"message": "question"}
@@ -95,9 +95,9 @@ async def get_flashcard_batch(exclude_topics: str = "", lang: str = "en") -> dic
 
     Pipeline:
       1. Random chunk from FAISS
-      2. Gemini extracts the key topic
+      2. Model extracts the key topic
       3. FAISS search by topic (top-5 chunks)
-      4. Gemini generates 3-6 Q&A flashcards
+      4. Model generates 3-6 Q&A flashcards
 
     Query params:
       exclude_topics — comma-separated topics already shown to the user

@@ -4,11 +4,10 @@ Backend entry point.
 Usage (development):
     python main.py                        # OpenRouter, port 8000
     python main.py --model ollama         # Local Ollama
-    python main.py --model gemini         # Google Gemini
     python main.py --port 9000            # Custom port
 
 Usage (production via Docker):
-    Set MODEL_BACKEND, OPENROUTER_API_KEY / GEMINI_API_KEY / OLLAMA_MODEL env vars,
+    Set MODEL_BACKEND, OPENROUTER_API_KEY / OLLAMA_MODEL env vars,
     then: uvicorn main:app --host 0.0.0.0 --port 8000
 """
 from __future__ import annotations
@@ -19,12 +18,15 @@ import sys
 
 from config import Config
 
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Obsidian MCP Backend")
     parser.add_argument(
         "--model",
-        choices=["openrouter", "gemini", "ollama"],
+        choices=["openrouter", "ollama"],
         default=os.getenv("MODEL_BACKEND", "openrouter"),
     )
     parser.add_argument(
@@ -50,18 +52,6 @@ def build_model(config: Config):
             )
             sys.exit(1)
         return OpenRouterModel(config)
-
-    if config.model_backend == "gemini":
-        from model.gemini_model import GeminiModel
-
-        if not config.gemini_api_key:
-            print(
-                "ERROR: GEMINI_API_KEY is not set.\n"
-                "  Set it in .env or as an environment variable.",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-        return GeminiModel(config)
 
     if config.model_backend == "ollama":
         from model.ollama_model import OllamaModel

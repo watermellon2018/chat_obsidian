@@ -4,10 +4,10 @@ RAG chain — Tasks 3.2 and 3.3.
 Contains two independent components:
 
   RagChain.ask()              — Task 3.2
-    question → FAISS search → RAG_SYSTEM_PROMPT → Gemini → coherent answer
+    question → FAISS search → RAG_SYSTEM_PROMPT → model → coherent answer
 
   generate_rag_flashcard()    — Task 3.3
-    random chunk from FAISS → RAG_FLASHCARD_PROMPT → Gemini → JSON {question, answer}
+    random chunk from FAISS → RAG_FLASHCARD_PROMPT → model → JSON {question, answer}
 
 Both components do NOT touch the MCP chain (orchestrator.py).
 """
@@ -31,11 +31,11 @@ from retrieval.search import RetrievalService, SearchResult
 
 class RagChain:
     """
-    Chain: question → FAISS → prompt → Gemini → answer.
+    Chain: question → FAISS → prompt → model → answer.
 
     Created once at application startup:
 
-        rag = RagChain(model=gemini_model)
+        rag = RagChain(model=openrouter_model)
 
     Then called for each question:
 
@@ -122,7 +122,7 @@ async def generate_rag_flashcard(
     exclude: list[str] | None = None,
 ) -> dict:
     """
-    Take a random chunk from FAISS and ask Gemini to generate a flashcard.
+    Take a random chunk from FAISS and ask model to generate a flashcard.
 
     Difference from the old generate_flashcard() in orchestrator.py:
       - Old: a random full NOTE via MCP (list_notes → read_note)
@@ -130,7 +130,7 @@ async def generate_rag_flashcard(
 
     Parameters
     ----------
-    model      : model (Gemini / Ollama)
+    model      : model (OpenRouter / Ollama)
     retrieval  : already loaded RetrievalService (FAISS in memory)
     exclude    : list of source names for already-shown flashcards (deduplication)
 
@@ -191,9 +191,9 @@ async def generate_flashcard_batch(
     Generates a batch of 3-6 flashcards on one topic:
 
     1. Takes a random chunk from FAISS
-    2. Asks Gemini to extract the key topic (a short search query)
+    2. Asks model to extract the key topic (a short search query)
     3. Searches FAISS for top_k chunks on that topic
-    4. Asks Gemini to generate 3-6 flashcards from the found fragments
+    4. Asks model to generate 3-6 flashcards from the found fragments
     5. Returns {"topic": "...", "cards": [...], "sources": [...]}
 
     Parameters

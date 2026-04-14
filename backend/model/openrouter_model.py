@@ -2,7 +2,7 @@
 OpenRouter model backend (OpenAI-compatible API).
 
 Supports any model available on https://openrouter.ai/models
-Default: google/gemini-2.5-flash
+Default: deepseek/deepseek-chat-v3-0324
 """
 from __future__ import annotations
 

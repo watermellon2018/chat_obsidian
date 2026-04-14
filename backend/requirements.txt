@@ -2,7 +2,6 @@
 mcp>=1.0.0
 
 # Model backends
-google-genai>=0.8.0
 ollama>=0.3.0
 
 # Search
