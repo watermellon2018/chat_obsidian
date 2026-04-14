@@ -10,12 +10,12 @@ if str(_repo_root) not in sys.path:
 
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 from backend.db_script.embeddings import build_chunks
 
 
 def main():
-    from langchain_google_genai import GoogleGenerativeAIEmbeddings
     model_embeddings = GoogleGenerativeAIEmbeddings(model="gemini-embedding-2-preview",
                                                     api_key=os.getenv("GEMINI_API_KEY"),
                                                     task_type='RETRIEVAL_DOCUMENT')

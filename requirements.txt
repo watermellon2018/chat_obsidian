@@ -11,6 +11,7 @@ langchain
 langchain-community
 langchain-text-splitters
 langchain-openai
+langchain-google-genai
 faiss-cpu
 PySocks
 httpx[socks]
