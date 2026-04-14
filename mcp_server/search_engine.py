@@ -33,7 +33,8 @@ class SearchEngine:
             self._paths.append(note["path"])
             self._titles.append(note["title"])
             self._raw_contents.append(content)
-            corpus.append(self._tokenize(content))
+            # corpus.append(self._tokenize(content))
+            corpus.append(self._tokenize(note["title"] + " " + content))
 
         if corpus:
             self._bm25 = BM25Plus(corpus)
@@ -54,7 +55,7 @@ class SearchEngine:
         for idx, score in ranked[:limit]:
             if score <= 0:
                 break
-            snippet = self._extract_snippet(self._raw_contents[idx], tokens)
+            snippet = self._extract_snippet(self._raw_contents[idx], tokens, window=800)
             results.append(
                 {
                     "path": self._paths[idx],
